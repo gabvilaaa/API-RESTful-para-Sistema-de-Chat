@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Chat — Conversas</title>
+  <style>
+    :root {
+      --bg: #f9fafb;
+      --card: #ffffff;
+      --primary: #4f46e5;
+      --muted: #6b7280;
+      --radius: 10px;
+      --shadow: 0 6px 24px rgba(0,0,0,0.05);
+      font-family: Inter, system-ui, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 280px;
+      background: #fff;
+      border-right: 1px solid #e5e7eb;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow);
+    }
+
+    .sidebar-header {
+      padding: 16px;
+      border-bottom: 1px solid #e5e7eb;
+      font-weight: 600;
+      color: var(--primary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .rooms, .privates {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+    }
+
+    .rooms h3, .privates h3 {
+      font-size: 14px;
+      color: var(--muted);
+      margin-top: 10px;
+      margin-bottom: 6px;
+    }
+
+    .item {
+      background: #f9fafb;
+      border-radius: var(--radius);
+      padding: 10px;
+      margin-bottom: 6px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .item:hover {
+      background: rgba(79,70,229,0.1);
+    }
+
+    /* Chat Area */
+    .chat {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #f3f4f6;
+    }
+
+    .chat-header {
+      padding: 14px 20px;
+      background: #fff;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+    }
+
+    .messages {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .msg {
+      max-width: 70%;
+      padding: 10px 14px;
+      border-radius: 14px;
+      line-height: 1.4;
+      word-wrap: break-word;
+    }
+
+    .msg.self {
+      background: var(--primary);
+      color: white;
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+    }
+
+    .msg.other {
+      background: #fff;
+      color: #111;
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+    }
+
+    .chat-input {
+      display: flex;
+      padding: 12px;
+      border-top: 1px solid #e5e7eb;
+      background: #fff;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .chat-input input {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: var(--radius);
+      outline: none;
+      font-size: 14px;
+    }
+
+    .chat-input button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .chat-input button:hover {
+      background: #4338ca;
+    }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <span id="userLabel">💬 ChatApp</span>
+      <button id="logoutBtn" style="border:none;background:none;color:#ef4444;cursor:pointer;">Sair</button>
+    </div>
+
+    <div class="rooms">
+      <h3>Salas</h3>
+      <div id="roomList">Carregando...</div>
+    </div>
+
+    <div class="privates">
+      <h3>Privados</h3>
+      <div id="privateList">Carregando...</div>
+    </div>
+  </div>
+
+  <div class="chat">
+    <div class="chat-header">
+      <span id="chatTitle">Selecione uma conversa</span>
+    </div>
+    <div class="messages" id="messages"></div>
+    <div class="chat-input">
+      <input type="text" id="messageInput" placeholder="Digite sua mensagem..." disabled>
+      <button id="sendBtn" disabled>Enviar</button>
+    </div>
+  </div>
+
+  <script>
+    let ws = null;
+    let currentRoom = null;
+    const username = localStorage.getItem("username");
+
+    if (!username) {
+      window.location.href = "/";
+    } else {
+      document.getElementById("userLabel").textContent = "👤 " + username;
+    }
+
+    async function loadRooms() {
+      const roomList = document.getElementById("roomList");
+      const privateList = document.getElementById("privateList");
+
+      try {
+        const resRooms = await fetch(`/rooms/${username}`);
+        const resPriv = await fetch(`/users/${username}/privates`);
+        const rooms = await resRooms.json();
+        const privates = await resPriv.json();
+
+        roomList.innerHTML = "";
+        privateList.innerHTML = "";
+
+        rooms.forEach(r => {
+          const div = document.createElement("div");
+          div.className = "item";
+          div.textContent = r.name;
+          div.onclick = () => connectToRoom(r.id, r.name);
+          roomList.appendChild(div);
+        });
+
+        privates.forEach(p => {
+          const div = document.createElement("div");
+          div.className = "item";
+          div.textContent = p.username;
+          div.onclick = () => connectToRoom(p.id, p.username);
+          privateList.appendChild(div);
+        });
+
+      } catch (e) {
+        roomList.innerHTML = "Erro ao carregar salas.";
+        privateList.innerHTML = "";
+      }
+    }
+
+    function connectToRoom(roomId, name) {
+      if (ws) ws.close();
+      currentRoom = roomId;
+      document.getElementById("chatTitle").textContent = name;
+      const input = document.getElementById("messageInput");
+      const send = document.getElementById("sendBtn");
+      input.disabled = false;
+      send.disabled = false;
+
+      ws = new WebSocket(`ws://localhost:8000/ws/${roomId}/${username}`);
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        appendMessage(data.sender, data.content, data.sender === username);
+      };
+    }
+
+    document.getElementById("sendBtn").addEventListener("click", sendMessage);
+    document.getElementById("messageInput").addEventListener("keypress", e => {
+      if (e.key === "Enter") sendMessage();
+    });
+
+    function sendMessage() {
+      const input = document.getElementById("messageInput");
+      const text = input.value.trim();
+      if (!text || !ws) return;
+      ws.send(JSON.stringify({ content: text }));
+      appendMessage(username, text, true);
+      input.value = "";
+    }
+
+    function appendMessage(sender, text, self=false) {
+      const messages = document.getElementById("messages");
+      const div = document.createElement("div");
+      div.className = "msg " + (self ? "self" : "other");
+      div.textContent = `${self ? '' : sender + ': '} ${text}`;
+      messages.appendChild(div);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      localStorage.removeItem("username");
+      window.location.href = "/";
+    });
+
+    loadRooms();
+  </script>
+</body>
+</html>

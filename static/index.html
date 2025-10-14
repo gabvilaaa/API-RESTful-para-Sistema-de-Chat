@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Login / Cadastro — Chat</title>
+  <style>
+    :root{
+      --bg:#f3f6fb;
+      --card:#ffffff;
+      --primary:#4f46e5;
+      --muted:#6b7280;
+      --success:#16a34a;
+      --danger:#ef4444;
+      --shadow: 0 8px 30px rgba(15,23,42,0.07);
+      --radius:12px;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: linear-gradient(180deg,#eef2ff 0%, var(--bg) 100%);
+      padding:24px;
+    }
+
+    .container{
+      width:100%;
+      max-width:980px;
+      background:transparent;
+      display:grid;
+      grid-template-columns: 1fr 420px;
+      gap:28px;
+      align-items:center;
+    }
+
+    /* painel informativo */
+    .panel {
+      background: linear-gradient(180deg, rgba(79,70,229,0.08), rgba(79,70,229,0.03));
+      padding:36px;
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      color:#0f172a;
+    }
+    .panel h1{margin:0 0 8px;font-size:28px}
+    .panel p{margin:0;color:var(--muted)}
+
+    /* card formulário */
+    .card{
+      background:var(--card);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:22px;
+    }
+    .tabs{
+      display:flex;
+      gap:10px;
+      margin-bottom:18px;
+    }
+    .tab{
+      flex:1;
+      text-align:center;
+      padding:10px 12px;
+      border-radius:8px;
+      cursor:pointer;
+      font-weight:600;
+      color:var(--muted);
+      user-select:none;
+      border:1px solid transparent;
+    }
+    .tab.active{
+      background:linear-gradient(90deg,var(--primary),#7c3aed);
+      color:white;
+      border-color:rgba(79,70,229,0.18);
+      box-shadow: 0 6px 18px rgba(79,70,229,0.12);
+    }
+
+    form{display:flex;flex-direction:column;gap:12px}
+    label{font-size:13px;color:var(--muted)}
+    input[type="text"], input[type="email"], input[type="password"]{
+      padding:10px 12px;
+      border-radius:8px;
+      border:1px solid #e6e9ef;
+      outline:none;
+      font-size:14px;
+      background:transparent;
+    }
+    input:focus{border-color:rgba(79,70,229,0.5); box-shadow:0 4px 14px rgba(79,70,229,0.06)}
+    .row{display:flex;gap:10px}
+    .small{flex:1}
+    .actions{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+    button{
+      background:var(--primary);
+      color:white;
+      border:none;
+      padding:10px 14px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:600;
+    }
+    button.ghost{
+      background:transparent;
+      color:var(--muted);
+      border:1px solid #eef2ff;
+    }
+    .hint{font-size:13px;color:var(--muted)}
+    .msg{
+      padding:10px 12px;border-radius:8px;font-weight:600;font-size:14px;
+    }
+    .msg.success{background:rgba(16,185,129,0.08); color:var(--success); border:1px solid rgba(16,185,129,0.12)}
+    .msg.error{background:rgba(239,68,68,0.08); color:var(--danger); border:1px solid rgba(239,68,68,0.12)}
+
+    .toggle-pass{cursor:pointer;font-size:13px;color:var(--muted); user-select:none}
+
+    /* responsivo */
+    @media(max-width:900px){
+      .container{grid-template-columns:1fr; max-width:680px}
+      .panel{order:2}
+    }
+  </style>
+</head>
+<body>
+  <div class="container" role="main">
+    <div class="panel" aria-hidden="false">
+      <h1>Bem-vindo ao Chat</h1>
+      <p>Entre para conversar em tempo real com outras pessoas. Se ainda não tem conta, crie uma rapidamente — é grátis e leva 10 segundos.</p>
+      <hr style="margin:18px 0;border:none;border-top:1px solid rgba(15,23,42,0.06)">
+      <p class="hint"><strong>Dicas:</strong></p>
+      <ul style="margin:8px 0 0; padding-left:18px; color:var(--muted)">
+        <li>Use um apelido curto para facilitar a identificação.</li>
+        <li>Conexão WebSocket necessária para o chat em tempo real.</li>
+        <li>Em produção, sempre use HTTPS e autenticação (tokens / sessions).</li>
+      </ul>
+    </div>
+
+    <div class="card" aria-live="polite">
+      <div class="tabs" role="tablist">
+        <div class="tab active" id="tab-login" role="tab" aria-selected="true">Login</div>
+        <div class="tab" id="tab-register" role="tab" aria-selected="false">Cadastro</div>
+      </div>
+
+      <!-- mensagens -->
+      <div id="status" style="margin-bottom:8px"></div>
+
+      <!-- LOGIN -->
+      <form id="form-login" novalidate>
+        <label for="login-email">Email ou Usuário</label>
+        <input id="login-email" name="email" type="text" placeholder="ex: gabriel@exemplo.com" required>
+
+        <label for="login-pass">Senha</label>
+        <div class="row">
+          <input id="login-pass" name="password" type="password" placeholder="••••••••" required class="small">
+          <div style="display:flex;align-items:center;">
+            <span class="toggle-pass" data-target="login-pass">mostrar</span>
+          </div>
+        </div>
+
+        <div class="actions">
+          <div class="hint">Ainda não tem conta? <a href="#" id="link-to-register">Cadastre-se</a></div>
+          <button type="submit">Entrar</button>
+        </div>
+      </form>
+
+      <!-- CADASTRO -->
+      <form id="form-register" style="display:none" novalidate>
+        <label for="reg-name">Nome</label>
+        <input id="reg-name" name="name" type="text" placeholder="Seu nome" required>
+
+        <label for="reg-username">Usuário (aplicado como nickname)</label>
+        <input id="reg-username" name="username" type="text" placeholder="ex: gvilaca" required>
+
+        <div class="row">
+          <div class="small">
+            <label for="reg-email">Email</label>
+            <input id="reg-email" name="email" type="email" placeholder="ex: você@exemplo.com" required>
+          </div>
+          <div style="width:12px"></div>
+        </div>
+
+        <label for="reg-pass">Senha</label>
+        <div class="row">
+          <input id="reg-pass" name="password" type="password" placeholder="Mínimo 6 caracteres" required class="small">
+          <div style="display:flex;align-items:center;">
+            <span class="toggle-pass" data-target="reg-pass">mostrar</span>
+          </div>
+        </div>
+
+        <div class="actions">
+          <div class="hint">Já tem conta? <a href="#" id="link-to-login">Fazer login</a></div>
+          <button type="submit">Criar conta</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // elementos
+    const tabLogin = document.getElementById('tab-login');
+    const tabRegister = document.getElementById('tab-register');
+    const formLogin = document.getElementById('form-login');
+    const formRegister = document.getElementById('form-register');
+    const statusBox = document.getElementById('status');
+
+    function showStatus(type, text) {
+      if (!text) { statusBox.innerHTML = ''; return; }
+      const div = document.createElement('div');
+      div.className = 'msg ' + (type === 'ok' ? 'success' : 'error');
+      div.textContent = text;
+      statusBox.innerHTML = '';
+      statusBox.appendChild(div);
+      // remove after 6s
+      setTimeout(()=> { if (statusBox.contains(div)) statusBox.removeChild(div); }, 6000);
+    }
+
+    function activateTab(which) {
+      if (which === 'login') {
+        tabLogin.classList.add('active'); tabLogin.setAttribute('aria-selected','true');
+        tabRegister.classList.remove('active'); tabRegister.setAttribute('aria-selected','false');
+        formLogin.style.display = '';
+        formRegister.style.display = 'none';
+      } else {
+        tabRegister.classList.add('active'); tabRegister.setAttribute('aria-selected','true');
+        tabLogin.classList.remove('active'); tabLogin.setAttribute('aria-selected','false');
+        formRegister.style.display = '';
+        formLogin.style.display = 'none';
+      }
+    }
+
+    tabLogin.addEventListener('click', ()=> activateTab('login'));
+    tabRegister.addEventListener('click', ()=> activateTab('register'));
+
+    // links dentro do card
+    document.getElementById('link-to-register').addEventListener('click', (e)=>{
+      e.preventDefault(); activateTab('register');
+    });
+    document.getElementById('link-to-login').addEventListener('click', (e)=>{
+      e.preventDefault(); activateTab('login');
+    });
+
+    // toggle visibilidade senha
+    document.querySelectorAll('.toggle-pass').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        const target = document.getElementById(el.dataset.target);
+        if (!target) return;
+        if (target.type === 'password') { target.type = 'text'; el.textContent = 'ocultar'; }
+        else { target.type = 'password'; el.textContent = 'mostrar'; }
+      });
+    });
+
+    // --------- Handlers de submit (exemplo com fetch) ---------
+    // OBS: ajuste as URLs '/login' e '/register' conforme seu backend FastAPI.
+    formLogin.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      // pegar valores
+      const emailUsername = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-pass').value;
+
+      if (!emailUsername || !password) { showStatus('err','Preencha todos os campos.'); return; }
+
+      try {
+        showStatus('',''); // limpa
+        // exemplo de POST JSON para sua API
+        const res = await fetch('/users/login', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ emailUsername, password })
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(()=>({detail:res.statusText}));
+          showStatus('err', err.detail || 'Erro ao fazer login.');
+          return;
+        }
+        const data = await res.json();
+        showStatus('ok', data.message || 'Login realizado com sucesso!');
+
+        // salva o nome do usuário (para o chat)
+        localStorage.setItem("username", emailUsername);
+
+        // redireciona para a tela de chats
+        setTimeout(() => {
+          window.location.href = "/static/chat.html";
+        }, 1000);
+      } catch (err) {
+        console.error(err);
+        showStatus('err', 'Erro de conexão com o servidor.');
+      }
+    });
+
+    formRegister.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const name = document.getElementById('reg-name').value.trim();
+      const username = document.getElementById('reg-username').value.trim();
+      const email = document.getElementById('reg-email').value.trim();
+      const password = document.getElementById('reg-pass').value;
+      const role = 'user'
+
+      if (!name || !username || !email || !password) { showStatus('err','Preencha todos os campos.'); return; }
+      if (password.length < 6) { showStatus('err','Senha deve ter pelo menos 6 caracteres.'); return; }
+
+      try {
+        showStatus('','');
+        const res = await fetch('/users', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ name, username, email, password, role})
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(()=>({detail:res.statusText}));
+          showStatus('err', err.detail || 'Erro ao cadastrar.');
+          return;
+        }
+        const data = await res.json();
+        showStatus('ok', data.message || 'Conta criada com sucesso! Faça login.');
+        // opcional: trocar para aba login automaticamente
+        activateTab('login');
+      } catch (err) {
+        console.error(err);
+        showStatus('err', 'Erro de conexão com o servidor.');
+      }
+    });
+
+    // prevenir autocomplete indesejado e limpar mensagens ao digitar
+    document.querySelectorAll('input').forEach(i=>{
+      i.addEventListener('input', ()=> showStatus('',''));
+    });
+  </script>
+</body>
+</html>
