@@ -7,7 +7,7 @@ from fastapi import FastAPI, Depends,WebSocket, WebSocketDisconnect
 from sqlalchemy import or_, and_
 from sqlalchemy.orm import Session
 from database import get_db
-from identities import User, UserCreate, Room, RoomCreate, RoomMembers, MessageCreate, Message, UserAuth
+from identities import User, UserCreate, Room, RoomCreate, RoomMembers, MessageCreate, Message, UserAuth, GroupMessagePayload
 
 
 app = FastAPI()
@@ -275,7 +275,7 @@ def adminRemove(roomId: int, userId: int, db: Session = Depends(get_db)):
 
 @app.get("/rooms/{userId}")
 def get_rooms(userId: int, db:Session = Depends(get_db) ):
-    rooms = db.query(Room).filter(RoomMembers.user_id == userId).all()
+    rooms = db.query(Room).join(RoomMembers, Room.id == RoomMembers.room_id).filter(RoomMembers.user_id == userId).all()
     return rooms
 
 #----------------MESSAGES-----------------------------------
@@ -332,15 +332,14 @@ def direct(senderId: int, receiverId: int, content: str, db: Session = Depends(g
     }
 
 @app.post("/rooms/{roomId}/messages")
-def groupMessage(senderId: int, roomId: int, content: str, db: Session = Depends(get_db)):
+def groupMessage(roomId: int, payload: GroupMessagePayload, db: Session = Depends(get_db)):
     """
     Envia uma mensagem para todos os membros de uma sala de chat.
     Verifica se o usuário faz parte da sala antes de enviar.
     
     Parâmetros:
-        senderId (int): ID do remetente.
-        roomId (int): ID da sala.
-        content (str): conteúdo da mensagem.
+        roomId (int): ID da sala (do caminho da URL).
+        payload (GroupMessagePayload): Dados da mensagem (do corpo da requisição).
         db (Session): sessão do banco de dados.
     
     Retorna:
@@ -349,18 +348,21 @@ def groupMessage(senderId: int, roomId: int, content: str, db: Session = Depends
     room = db.query(Room).filter(Room.id == roomId).first()
     if not room:
         raise HTTPException(status_code=404, detail="Sala não encontrada")
+
+    # Os dados agora são extraídos do objeto payload
     membership = db.query(RoomMembers).filter(
         RoomMembers.room_id == roomId,
-        RoomMembers.user_id == senderId
+        RoomMembers.user_id == payload.senderId
     ).first()
     if not membership:
         raise HTTPException(status_code=403, detail="Usuário não faz parte desta sala")
+    
     # Criar mensagem
     message = Message(
         room_id=roomId,
-        sender_id=senderId,
+        sender_id=payload.senderId,
         receiver_id=None,
-        content=content,
+        content=payload.content,
         created_at=datetime.now()
     )
     db.add(message)

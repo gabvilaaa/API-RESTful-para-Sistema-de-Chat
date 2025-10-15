@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -11,7 +12,7 @@
       --primary: #4f46e5;
       --muted: #6b7280;
       --radius: 10px;
-      --shadow: 0 6px 24px rgba(0,0,0,0.05);
+      --shadow: 0 6px 24px rgba(0, 0, 0, 0.05);
       font-family: Inter, system-ui, sans-serif;
     }
 
@@ -43,12 +44,13 @@
       align-items: center;
     }
 
-    .rooms, .privates {
+    .rooms,
+    .privates {
       flex: 1;
       overflow-y: auto;
       padding: 10px;
     }
-    
+
     /* Cabeçalho da Lista de Salas (NOVO) */
     .rooms-header {
       display: flex;
@@ -56,31 +58,34 @@
       align-items: center;
       padding-right: 5px;
     }
+
     .rooms-header h3 {
       font-size: 14px;
       color: var(--muted);
       margin-top: 10px;
       margin-bottom: 6px;
     }
+
     #addNewRoomBtn {
-        background: var(--primary);
-        color: white;
-        border: none;
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        font-size: 18px;
-        font-weight: 600;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        line-height: 1;
-        padding-bottom: 2px;
-        transition: transform 0.2s;
+      background: var(--primary);
+      color: white;
+      border: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      font-size: 18px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      padding-bottom: 2px;
+      transition: transform 0.2s;
     }
+
     #addNewRoomBtn:hover {
-        transform: scale(1.1);
+      transform: scale(1.1);
     }
 
 
@@ -94,7 +99,7 @@
     }
 
     .item:hover {
-      background: rgba(79,70,229,0.1);
+      background: rgba(79, 70, 229, 0.1);
     }
 
     /* Estilos para estado vazio */
@@ -104,9 +109,11 @@
       color: var(--muted);
       font-size: 14px;
     }
+
     .empty-state p {
       margin: 0 0 12px;
     }
+
     .empty-state button {
       background: transparent;
       border: 1px solid var(--primary);
@@ -117,6 +124,7 @@
       font-weight: 600;
       transition: 0.2s;
     }
+
     .empty-state button:hover {
       background: var(--primary);
       color: white;
@@ -156,7 +164,10 @@
       line-height: 1.4;
       word-wrap: break-word;
     }
-    .msg strong { font-weight: 600; }
+
+    .msg strong {
+      font-weight: 600;
+    }
 
     .msg.self {
       background: var(--primary);
@@ -220,37 +231,44 @@
       visibility: hidden;
       transition: opacity 0.3s, visibility 0.3s;
     }
+
     .modal-overlay.visible {
       opacity: 1;
       visibility: visible;
     }
+
     .modal-content {
       background: var(--card);
       padding: 24px;
       border-radius: var(--radius);
-      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
       width: 100%;
       max-width: 400px;
       transform: scale(0.95);
       transition: transform 0.3s;
     }
+
     .modal-overlay.visible .modal-content {
       transform: scale(1);
     }
+
     .modal-content h2 {
       margin-top: 0;
       margin-bottom: 16px;
       font-size: 20px;
     }
+
     .form-group {
       margin-bottom: 12px;
     }
+
     .form-group label {
       display: block;
       font-size: 14px;
       color: var(--muted);
       margin-bottom: 6px;
     }
+
     .form-group input {
       width: 100%;
       padding: 10px 12px;
@@ -260,12 +278,14 @@
       font-size: 14px;
       box-sizing: border-box;
     }
+
     .modal-actions {
       display: flex;
       justify-content: flex-end;
       gap: 10px;
       margin-top: 20px;
     }
+
     .modal-actions button {
       padding: 10px 16px;
       border-radius: var(--radius);
@@ -273,80 +293,102 @@
       font-weight: 600;
       border: none;
     }
+
     .modal-actions button[type="submit"] {
       background: var(--primary);
       color: white;
     }
+
     .modal-actions button[type="button"] {
       background: #f3f4f6;
       color: var(--muted);
     }
+
     .modal-status-msg {
-        padding: 8px 10px;
-        border-radius: 8px;
-        font-size: 14px;
-        margin-top: 10px;
-    }
-    .modal-status-msg.error { background: rgba(239,68,68,0.08); color: #ef4444; border:1px solid rgba(239,68,68,0.12); }
-    
-    /* Estilos do Switch */
-    .switch-container {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background-color: #f9fafb;
-        padding: 12px;
-        border-radius: var(--radius);
-        margin-top: 16px;
-    }
-    .switch-container label[for="isPrivateSwitch"] {
-        margin: 0;
-        font-weight: 500;
-    }
-    .switch {
-        position: relative;
-        display: inline-block;
-        width: 50px;
-        height: 28px;
-    }
-    .switch input {
-        opacity: 0;
-        width: 0;
-        height: 0;
-    }
-    .slider {
-        position: absolute;
-        cursor: pointer;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: #ccc;
-        transition: .4s;
-        border-radius: 28px;
-    }
-    .slider:before {
-        position: absolute;
-        content: "";
-        height: 20px;
-        width: 20px;
-        left: 4px;
-        bottom: 4px;
-        background-color: white;
-        transition: .4s;
-        border-radius: 50%;
-    }
-    input:checked + .slider {
-        background-color: var(--primary);
-    }
-    input:checked + .slider:before {
-        transform: translateX(22px);
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-top: 10px;
     }
 
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+    .modal-status-msg.error {
+      background: rgba(239, 68, 68, 0.08);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.12);
+    }
+
+    /* Estilos do Switch */
+    .switch-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #f9fafb;
+      padding: 12px;
+      border-radius: var(--radius);
+      margin-top: 16px;
+    }
+
+    .switch-container label[for="isPrivateSwitch"] {
+      margin: 0;
+      font-weight: 500;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 28px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 28px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+
+    input:checked+.slider {
+      background-color: var(--primary);
+    }
+
+    input:checked+.slider:before {
+      transform: translateX(22px);
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #d1d5db;
+      border-radius: 4px;
+    }
   </style>
 </head>
+
 <body>
 
   <div class="sidebar">
@@ -396,11 +438,11 @@
         </div>
 
         <div class="switch-container">
-            <label for="isPrivateSwitch">Sala Privada</label>
-            <label class="switch">
-                <input type="checkbox" id="isPrivateSwitch">
-                <span class="slider"></span>
-            </label>
+          <label for="isPrivateSwitch">Sala Privada</label>
+          <label class="switch">
+            <input type="checkbox" id="isPrivateSwitch">
+            <span class="slider"></span>
+          </label>
         </div>
 
         <div id="modalStatus"></div>
@@ -414,12 +456,18 @@
 
 
   <script>
+
+
     // --- Elementos Globais ---
     let ws = null;
     let currentRoom = null;
     const username = localStorage.getItem("username");
     const userId = localStorage.getItem("userId");
 
+    // --- Carga Inicial ---
+    loadRooms();
+    
+    
     // Elementos do Modal
     const createRoomModal = document.getElementById("createRoomModal");
     const createRoomForm = document.getElementById("createRoomForm");
@@ -432,45 +480,47 @@
     } else {
       document.getElementById("userLabel").textContent = "👤 " + username;
     }
-    
+
     // --- Funções ---
-
     function openCreateRoomModal() {
-        modalStatus.innerHTML = '';
-        createRoomForm.reset();
-        createRoomModal.classList.add("visible");
+      modalStatus.innerHTML = '';
+      createRoomForm.reset();
+      createRoomModal.classList.add("visible");
     }
-
+    
     async function loadRooms() {
+
       const roomList = document.getElementById("roomList");
       const privateList = document.getElementById("privateList");
 
       try {
         const resRooms = await fetch(`/rooms/${userId}`);
+        //console.log(resRooms);  
+
         if (!resRooms.ok) throw new Error("Falha ao carregar salas.");
-        
+
         const rooms = await resRooms.json();
         roomList.innerHTML = "";
         privateList.innerHTML = "";
 
         if (rooms && rooms.length > 0) {
-            rooms.forEach(r => {
-                const div = document.createElement("div");
-                div.className = "item";
-                div.textContent = r.name;
-                div.onclick = () => connectToRoom(r.id, r.name);
-                roomList.appendChild(div);
-            });
+          rooms.forEach(r => {
+            const div = document.createElement("div");
+            div.className = "item";
+            div.textContent = r.name;
+            div.onclick = () => connectToRoom(r.id, r.name);
+            roomList.appendChild(div);
+          });
         }
-        
+
         if (roomList.innerHTML === "") {
-            roomList.innerHTML = `
+          roomList.innerHTML = `
                 <div class="empty-state">
                     <p>Nenhum chat disponível.</p>
                     <button id="createRoomBtn">Criar uma sala</button>
                 </div>
             `;
-            document.getElementById("createRoomBtn").addEventListener("click", openCreateRoomModal);
+          document.getElementById("createRoomBtn").addEventListener("click", openCreateRoomModal);
         }
 
       } catch (e) {
@@ -489,28 +539,60 @@
       document.getElementById('messages').innerHTML = '';
 
       ws = new WebSocket(`ws://localhost:8000/ws/${roomId}/${username}`);
+      loadMessages();
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
         appendMessage(data.sender, data.content, data.sender === username);
       };
     }
 
-    function sendMessage() {
+    async function sendMessage() {
       const input = document.getElementById("messageInput");
       const text = input.value.trim();
       if (!text || !ws) return;
       ws.send(JSON.stringify({ content: text }));
-      input.value = "";
+      //
+
+      const res = await fetch(`/rooms/${currentRoom}/messages`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            senderId: userId,
+            roomId: currentRoom,
+            content: text
+          })
+        });
+
+        input.value = "";
+    }
+
+    async function loadMessages() {
+
+      const resMessage = await fetch(`/rooms/${currentRoom}/messages`);
+      if (!resMessage.ok) {
+        console.error("Erro ao carregar mensagens.");
+        return;
+      }
+      const messageData = await resMessage.json();
+      if (!messageData || messageData.length === 0) return;
+      
+
+      messageData.forEach(msg => {
+      //  console.log("Carregando mensagens para a sala");
+        appendMessage(msg.sender_id, msg.content, true);
+      });
     }
 
     function appendMessage(sender, text, self = false) {
+      
+
       const messages = document.getElementById("messages");
       const div = document.createElement("div");
       div.className = "msg " + (self ? "self" : "other");
-      
+
       const senderSpan = self ? '' : `<strong>${sender}:</strong> `;
       div.innerHTML = `${senderSpan}${text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}`;
-      
+
       messages.appendChild(div);
       messages.scrollTop = messages.scrollHeight;
     }
@@ -555,12 +637,12 @@
         const res = await fetch('/rooms', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-              name: roomName, 
-              description: roomDescription, 
-              members: 1, 
-              is_private: isPrivate 
-            })
+          body: JSON.stringify({
+            name: roomName,
+            description: roomDescription,
+            members: 1,
+            is_private: isPrivate
+          })
         });
 
         if (!res.ok) {
@@ -569,9 +651,9 @@
         }
 
         const newRoom = await res.json();
-        
+
         const enterRes = await fetch(`/rooms/${newRoom.id}/enter?userId=${userId}`, { method: 'POST' });
-        if(!enterRes.ok) throw new Error("Não foi possível entrar na sala recém-criada.");
+        if (!enterRes.ok) throw new Error("Não foi possível entrar na sala recém-criada.");
 
         createRoomModal.classList.remove("visible");
         loadRooms();
@@ -582,9 +664,8 @@
       }
     });
 
-    // --- Carga Inicial ---
-    loadRooms();
+
   </script>
 </body>
-</html>
 
+</html>

@@ -67,6 +67,11 @@ class UserOut(BaseModel):
     class Config:
         orm_mode = True  # permite que o Pydantic leia objetos SQLAlchemy
 
+class GroupMessagePayload(BaseModel):
+    senderId: int
+    content: str
+    # O roomId é obtido do caminho da URL, então não é necessário aqui.
+
 class Message(Base):
     __tablename__ = "messages"
     id = Column(Integer, primary_key=True, index=True)
@@ -93,3 +98,4 @@ class MessageOut(BaseModel):
 
     class Config:
         orm_mode = True  # permite que o Pydantic leia objetos SQLAlchemy
+
