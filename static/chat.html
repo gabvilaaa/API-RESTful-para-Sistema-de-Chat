@@ -48,13 +48,41 @@
       overflow-y: auto;
       padding: 10px;
     }
-
-    .rooms h3, .privates h3 {
+    
+    /* Cabeçalho da Lista de Salas (NOVO) */
+    .rooms-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-right: 5px;
+    }
+    .rooms-header h3 {
       font-size: 14px;
       color: var(--muted);
       margin-top: 10px;
       margin-bottom: 6px;
     }
+    #addNewRoomBtn {
+        background: var(--primary);
+        color: white;
+        border: none;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        font-size: 18px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+        padding-bottom: 2px;
+        transition: transform 0.2s;
+    }
+    #addNewRoomBtn:hover {
+        transform: scale(1.1);
+    }
+
 
     .item {
       background: #f9fafb;
@@ -67,6 +95,31 @@
 
     .item:hover {
       background: rgba(79,70,229,0.1);
+    }
+
+    /* Estilos para estado vazio */
+    .empty-state {
+      padding: 20px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .empty-state p {
+      margin: 0 0 12px;
+    }
+    .empty-state button {
+      background: transparent;
+      border: 1px solid var(--primary);
+      color: var(--primary);
+      padding: 8px 12px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-weight: 600;
+      transition: 0.2s;
+    }
+    .empty-state button:hover {
+      background: var(--primary);
+      color: white;
     }
 
     /* Chat Area */
@@ -103,6 +156,7 @@
       line-height: 1.4;
       word-wrap: break-word;
     }
+    .msg strong { font-weight: 600; }
 
     .msg.self {
       background: var(--primary);
@@ -150,6 +204,145 @@
       background: #4338ca;
     }
 
+    /* Estilos do Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s;
+    }
+    .modal-overlay.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+    .modal-content {
+      background: var(--card);
+      padding: 24px;
+      border-radius: var(--radius);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 400px;
+      transform: scale(0.95);
+      transition: transform 0.3s;
+    }
+    .modal-overlay.visible .modal-content {
+      transform: scale(1);
+    }
+    .modal-content h2 {
+      margin-top: 0;
+      margin-bottom: 16px;
+      font-size: 20px;
+    }
+    .form-group {
+      margin-bottom: 12px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: var(--radius);
+      outline: none;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .modal-actions button {
+      padding: 10px 16px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-weight: 600;
+      border: none;
+    }
+    .modal-actions button[type="submit"] {
+      background: var(--primary);
+      color: white;
+    }
+    .modal-actions button[type="button"] {
+      background: #f3f4f6;
+      color: var(--muted);
+    }
+    .modal-status-msg {
+        padding: 8px 10px;
+        border-radius: 8px;
+        font-size: 14px;
+        margin-top: 10px;
+    }
+    .modal-status-msg.error { background: rgba(239,68,68,0.08); color: #ef4444; border:1px solid rgba(239,68,68,0.12); }
+    
+    /* Estilos do Switch */
+    .switch-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #f9fafb;
+        padding: 12px;
+        border-radius: var(--radius);
+        margin-top: 16px;
+    }
+    .switch-container label[for="isPrivateSwitch"] {
+        margin: 0;
+        font-weight: 500;
+    }
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 28px;
+    }
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 28px;
+    }
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 20px;
+        width: 20px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+    input:checked + .slider {
+        background-color: var(--primary);
+    }
+    input:checked + .slider:before {
+        transform: translateX(22px);
+    }
+
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
   </style>
@@ -163,13 +356,17 @@
     </div>
 
     <div class="rooms">
-      <h3>Salas</h3>
+      <!-- Cabeçalho com botão de adicionar (NOVO) -->
+      <div class="rooms-header">
+        <h3>Salas</h3>
+        <button id="addNewRoomBtn" title="Criar nova sala">+</button>
+      </div>
       <div id="roomList">Carregando...</div>
     </div>
 
     <div class="privates">
       <h3>Privados</h3>
-      <div id="privateList">Carregando...</div>
+      <div id="privateList"></div>
     </div>
   </div>
 
@@ -184,15 +381,64 @@
     </div>
   </div>
 
+  <!-- Modal de Criação de Sala -->
+  <div id="createRoomModal" class="modal-overlay">
+    <div class="modal-content">
+      <h2>Criar Nova Sala</h2>
+      <form id="createRoomForm" novalidate>
+        <div class="form-group">
+          <label for="roomName">Nome da Sala</label>
+          <input type="text" id="roomName" required placeholder="Ex: Jogos Online">
+        </div>
+        <div class="form-group">
+          <label for="roomDescription">Descrição</label>
+          <input type="text" id="roomDescription" required placeholder="Um lugar para falar sobre jogos">
+        </div>
+
+        <div class="switch-container">
+            <label for="isPrivateSwitch">Sala Privada</label>
+            <label class="switch">
+                <input type="checkbox" id="isPrivateSwitch">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div id="modalStatus"></div>
+        <div class="modal-actions">
+          <button type="button" id="cancelCreateRoom">Cancelar</button>
+          <button type="submit">Criar Sala</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
   <script>
+    // --- Elementos Globais ---
     let ws = null;
     let currentRoom = null;
     const username = localStorage.getItem("username");
+    const userId = localStorage.getItem("userId");
 
-    if (!username) {
+    // Elementos do Modal
+    const createRoomModal = document.getElementById("createRoomModal");
+    const createRoomForm = document.getElementById("createRoomForm");
+    const cancelCreateRoomBtn = document.getElementById("cancelCreateRoom");
+    const modalStatus = document.getElementById('modalStatus');
+
+    // --- Inicialização ---
+    if (!username || !userId) {
       window.location.href = "/";
     } else {
       document.getElementById("userLabel").textContent = "👤 " + username;
+    }
+    
+    // --- Funções ---
+
+    function openCreateRoomModal() {
+        modalStatus.innerHTML = '';
+        createRoomForm.reset();
+        createRoomModal.classList.add("visible");
     }
 
     async function loadRooms() {
@@ -200,32 +446,36 @@
       const privateList = document.getElementById("privateList");
 
       try {
-        const resRooms = await fetch(`/rooms/${username}`);
-        const resPriv = await fetch(`/users/${username}/privates`);
+        const resRooms = await fetch(`/rooms/${userId}`);
+        if (!resRooms.ok) throw new Error("Falha ao carregar salas.");
+        
         const rooms = await resRooms.json();
-        const privates = await resPriv.json();
-
         roomList.innerHTML = "";
         privateList.innerHTML = "";
 
-        rooms.forEach(r => {
-          const div = document.createElement("div");
-          div.className = "item";
-          div.textContent = r.name;
-          div.onclick = () => connectToRoom(r.id, r.name);
-          roomList.appendChild(div);
-        });
-
-        privates.forEach(p => {
-          const div = document.createElement("div");
-          div.className = "item";
-          div.textContent = p.username;
-          div.onclick = () => connectToRoom(p.id, p.username);
-          privateList.appendChild(div);
-        });
+        if (rooms && rooms.length > 0) {
+            rooms.forEach(r => {
+                const div = document.createElement("div");
+                div.className = "item";
+                div.textContent = r.name;
+                div.onclick = () => connectToRoom(r.id, r.name);
+                roomList.appendChild(div);
+            });
+        }
+        
+        if (roomList.innerHTML === "") {
+            roomList.innerHTML = `
+                <div class="empty-state">
+                    <p>Nenhum chat disponível.</p>
+                    <button id="createRoomBtn">Criar uma sala</button>
+                </div>
+            `;
+            document.getElementById("createRoomBtn").addEventListener("click", openCreateRoomModal);
+        }
 
       } catch (e) {
-        roomList.innerHTML = "Erro ao carregar salas.";
+        console.error(e);
+        roomList.innerHTML = `<div class="empty-state"><p>Erro ao carregar salas.</p></div>`;
         privateList.innerHTML = "";
       }
     }
@@ -234,10 +484,9 @@
       if (ws) ws.close();
       currentRoom = roomId;
       document.getElementById("chatTitle").textContent = name;
-      const input = document.getElementById("messageInput");
-      const send = document.getElementById("sendBtn");
-      input.disabled = false;
-      send.disabled = false;
+      document.getElementById("messageInput").disabled = false;
+      document.getElementById("sendBtn").disabled = false;
+      document.getElementById('messages').innerHTML = '';
 
       ws = new WebSocket(`ws://localhost:8000/ws/${roomId}/${username}`);
       ws.onmessage = (event) => {
@@ -246,35 +495,96 @@
       };
     }
 
-    document.getElementById("sendBtn").addEventListener("click", sendMessage);
-    document.getElementById("messageInput").addEventListener("keypress", e => {
-      if (e.key === "Enter") sendMessage();
-    });
-
     function sendMessage() {
       const input = document.getElementById("messageInput");
       const text = input.value.trim();
       if (!text || !ws) return;
       ws.send(JSON.stringify({ content: text }));
-      appendMessage(username, text, true);
       input.value = "";
     }
 
-    function appendMessage(sender, text, self=false) {
+    function appendMessage(sender, text, self = false) {
       const messages = document.getElementById("messages");
       const div = document.createElement("div");
       div.className = "msg " + (self ? "self" : "other");
-      div.textContent = `${self ? '' : sender + ': '} ${text}`;
+      
+      const senderSpan = self ? '' : `<strong>${sender}:</strong> `;
+      div.innerHTML = `${senderSpan}${text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}`;
+      
       messages.appendChild(div);
       messages.scrollTop = messages.scrollHeight;
     }
 
+    // --- Event Listeners ---
+    document.getElementById("sendBtn").addEventListener("click", sendMessage);
+    document.getElementById("messageInput").addEventListener("keypress", e => {
+      if (e.key === "Enter") sendMessage();
+    });
+
     document.getElementById("logoutBtn").addEventListener("click", () => {
       localStorage.removeItem("username");
+      localStorage.removeItem("userId");
       window.location.href = "/";
     });
 
+    document.getElementById('addNewRoomBtn').addEventListener('click', openCreateRoomModal);
+
+    // Listeners do Modal
+    cancelCreateRoomBtn.addEventListener("click", () => {
+      createRoomModal.classList.remove("visible");
+    });
+    createRoomModal.addEventListener("click", (e) => {
+      if (e.target === createRoomModal) {
+        createRoomModal.classList.remove("visible");
+      }
+    });
+
+    createRoomForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const roomName = document.getElementById("roomName").value.trim();
+      const roomDescription = document.getElementById("roomDescription").value.trim();
+      const isPrivate = document.getElementById("isPrivateSwitch").checked;
+
+      if (!roomName || !roomDescription) {
+        modalStatus.innerHTML = `<div class="modal-status-msg error">Preencha todos os campos.</div>`;
+        return;
+      }
+      modalStatus.innerHTML = '';
+
+      try {
+        const res = await fetch('/rooms', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+              name: roomName, 
+              description: roomDescription, 
+              members: 1, 
+              is_private: isPrivate 
+            })
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ detail: res.statusText }));
+          throw new Error(err.detail || 'Erro ao criar a sala.');
+        }
+
+        const newRoom = await res.json();
+        
+        const enterRes = await fetch(`/rooms/${newRoom.id}/enter?userId=${userId}`, { method: 'POST' });
+        if(!enterRes.ok) throw new Error("Não foi possível entrar na sala recém-criada.");
+
+        createRoomModal.classList.remove("visible");
+        loadRooms();
+
+      } catch (err) {
+        console.error(err);
+        modalStatus.innerHTML = `<div class="modal-status-msg error">${err.message}</div>`;
+      }
+    });
+
+    // --- Carga Inicial ---
     loadRooms();
   </script>
 </body>
 </html>
+
