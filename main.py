@@ -244,6 +244,11 @@ def leaveRoom(roomId: int, userId: int, db: Session = Depends(get_db)):
     db.commit()
     return {"message": f"Usuário {userId} saiu da sala {roomId}"}
 
+@app.get("/rooms")
+def get_new_rooms(name:str, db:Session = Depends(get_db) ):
+    rooms = db.query(Room).filter(Room.name.like(f"%{name}%")).all()
+    return rooms
+
 
 # Adm está se removendo aqui. Precisa implementar a validação JWT/OAuth antes dessa parte
 @app.delete("/rooms/{roomId}/users/{userId}")

@@ -51,7 +51,6 @@
       padding: 10px;
     }
 
-    /* Cabeçalho da Lista de Salas (NOVO) */
     .rooms-header {
       display: flex;
       justify-content: space-between;
@@ -88,6 +87,25 @@
       transform: scale(1.1);
     }
 
+    /* Barra de Pesquisa */
+    .search-container {
+      padding: 5px 0 10px;
+    }
+
+    #roomSearch {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: var(--radius);
+      outline: none;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+
+    #roomSearch:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+    }
 
     .item {
       background: #f9fafb;
@@ -102,7 +120,6 @@
       background: rgba(79, 70, 229, 0.1);
     }
 
-    /* Estilos para estado vazio */
     .empty-state {
       padding: 20px;
       text-align: center;
@@ -317,7 +334,6 @@
       border: 1px solid rgba(239, 68, 68, 0.12);
     }
 
-    /* Estilos do Switch */
     .switch-container {
       display: flex;
       justify-content: space-between;
@@ -398,10 +414,12 @@
     </div>
 
     <div class="rooms">
-      <!-- Cabeçalho com botão de adicionar (NOVO) -->
       <div class="rooms-header">
         <h3>Salas</h3>
         <button id="addNewRoomBtn" title="Criar nova sala">+</button>
+      </div>
+      <div class="search-container">
+        <input type="search" id="roomSearch" placeholder="Pesquisar salas...">
       </div>
       <div id="roomList">Carregando...</div>
     </div>
@@ -423,7 +441,6 @@
     </div>
   </div>
 
-  <!-- Modal de Criação de Sala -->
   <div id="createRoomModal" class="modal-overlay">
     <div class="modal-content">
       <h2>Criar Nova Sala</h2>
@@ -436,7 +453,6 @@
           <label for="roomDescription">Descrição</label>
           <input type="text" id="roomDescription" required placeholder="Um lugar para falar sobre jogos">
         </div>
-
         <div class="switch-container">
           <label for="isPrivateSwitch">Sala Privada</label>
           <label class="switch">
@@ -444,7 +460,6 @@
             <span class="slider"></span>
           </label>
         </div>
-
         <div id="modalStatus"></div>
         <div class="modal-actions">
           <button type="button" id="cancelCreateRoom">Cancelar</button>
@@ -454,84 +469,129 @@
     </div>
   </div>
 
-
   <script>
-
-
-    // --- Elementos Globais ---
     let ws = null;
     let currentRoom = null;
+    let allUserRooms = []; // Guarda todas as salas do usuário
     const username = localStorage.getItem("username");
     const userId = localStorage.getItem("userId");
 
-    // --- Carga Inicial ---
-    loadRooms();
-
-
-    // Elementos do Modal
     const createRoomModal = document.getElementById("createRoomModal");
     const createRoomForm = document.getElementById("createRoomForm");
     const cancelCreateRoomBtn = document.getElementById("cancelCreateRoom");
     const modalStatus = document.getElementById('modalStatus');
+    const roomSearchInput = document.getElementById('roomSearch');
 
-    // --- Inicialização ---
     if (!username || !userId) {
       window.location.href = "/";
     } else {
       document.getElementById("userLabel").textContent = "👤 " + username;
     }
 
-    // --- Funções ---
     function openCreateRoomModal() {
       modalStatus.innerHTML = '';
       createRoomForm.reset();
       createRoomModal.classList.add("visible");
     }
 
-    async function loadRooms() {
-
+    function renderRooms(roomsToRender, newRooms) {
       const roomList = document.getElementById("roomList");
       const privateList = document.getElementById("privateList");
 
+      roomList.innerHTML = "";
+      privateList.innerHTML = "";
+
+      // Renderizando roomsToRender
+      if (roomsToRender && roomsToRender.length > 0) {
+        roomsToRender.forEach(r => {
+          const div = document.createElement("div");
+          div.className = "item";
+          div.textContent = r.name;
+          div.onclick = () => connectToRoom(r.id, r.name);
+
+          if (r.is_private) {
+            privateList.appendChild(div);
+          } else {
+            roomList.appendChild(div);
+          }
+        });
+      } else if (roomSearchInput.value) {
+        roomList.innerHTML = `<div class="empty-state"><p>Nenhuma sala encontrada.</p></div>`;
+      } else {
+        roomList.innerHTML = `
+            <div class="empty-state">
+                <p>Nenhum chat disponível.</p>
+                <button id="createRoomBtn">Criar uma sala</button>
+            </div>
+        `;
+        document.getElementById("createRoomBtn").addEventListener("click", openCreateRoomModal);
+      }
+
+      // Verificando as novas salas
+      console.log('Novas salas:', newRooms);
+      if (Array.isArray(newRooms) && newRooms.length > 0) {
+        const newState = document.createElement("div");
+        newState.classList.add("empty-state");
+        newState.innerHTML = `
+            <p>Novas salas disponíveis.</p>
+            <button id="createRoomBtn">Criar uma sala</button>
+        `;
+        roomList.appendChild(newState);
+
+        newRooms.forEach(r => {
+          const div = document.createElement("div");
+          div.className = "item";
+          div.textContent = r.name;
+          div.onclick = () => connectToRoom(r.id, r.name);
+
+          if (r.is_private) {
+            privateList.appendChild(div);
+          } else {
+            roomList.appendChild(div);
+          }
+        });
+      }
+    }
+
+
+    async function get_new_rooms() {
+      if (roomSearchInput.value) {
+        const resnewRooms = await fetch(`/rooms?name=${roomSearchInput.value}`);
+        if (!resnewRooms.ok) throw new Error("Falha ao carregar salas.");
+        newRooms = await resnewRooms.json();
+        await console.log(newRooms);
+      } else {
+        newRooms = []
+
+      }
+      return newRooms;
+    }
+
+    async function loadRooms() {
+      const roomList = document.getElementById("roomList");
       try {
         const resRooms = await fetch(`/rooms/${userId}`);
-        //console.log(resRooms);  
-
         if (!resRooms.ok) throw new Error("Falha ao carregar salas.");
 
-        const rooms = await resRooms.json();
-        roomList.innerHTML = "";
-        privateList.innerHTML = "";
 
-        if (rooms && rooms.length > 0) {
-          rooms.forEach(r => {
-            console.log(r);
-            if (!r.is_private) {
-              const div = document.createElement("div");
-              div.className = "item";
-              div.textContent = r.name;
-              div.onclick = () => connectToRoom(r.id, r.name);
-              roomList.appendChild(div);
-            }
-          });
-        }
+        allUserRooms = await resRooms.json();
 
-        if (roomList.innerHTML === "") {
-          roomList.innerHTML = `
-                <div class="empty-state">
-                    <p>Nenhum chat disponível.</p>
-                    <button id="createRoomBtn">Criar uma sala</button>
-                </div>
-            `;
-          document.getElementById("createRoomBtn").addEventListener("click", openCreateRoomModal);
-        }
+        renderRooms(allUserRooms, []);
 
       } catch (e) {
         console.error(e);
         roomList.innerHTML = `<div class="empty-state"><p>Erro ao carregar salas.</p></div>`;
-        privateList.innerHTML = "";
       }
     }
+
+    async function loadRoomsAndRender(filteredRooms) {
+      const newRooms = await get_new_rooms(); // Aqui você espera a resposta!
+
+      console.log("Novas salas resolvidas:", newRooms); // Agora sim, será um array
+
+      renderRooms(filteredRooms, newRooms); // Aqui você passa os dados prontos
+    }
+
 
     function connectToRoom(roomId, name) {
       if (ws) ws.close();
@@ -542,30 +602,30 @@
       document.getElementById('messages').innerHTML = '';
 
       ws = new WebSocket(`ws://localhost:8000/ws/${roomId}/${username}`);
-      loadMessages();
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
         appendMessage(data.sender, data.content, data.sender === username);
       };
+      loadMessages();
     }
 
-    async function sendMessage() {
+    function sendMessage() {
       const input = document.getElementById("messageInput");
       const text = input.value.trim();
       if (!text || !ws) return;
-      ws.send(JSON.stringify({ content: text }));
-      //
 
-      const res = await fetch(`/rooms/${currentRoom}/messages`, {
+      const payload = {
+        senderId: parseInt(userId),
+        content: text
+      };
+
+      fetch(`/rooms/${currentRoom}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          senderId: userId,
-          roomId: currentRoom,
-          content: text
-        })
-      });
+        body: JSON.stringify(payload)
+      }).catch(err => console.error("API Error:", err));
 
+      ws.send(JSON.stringify({ content: text }));
       input.value = "";
     }
 
@@ -587,8 +647,6 @@
     }
 
     function appendMessage(sender, text, self = false) {
-
-
       const messages = document.getElementById("messages");
       const div = document.createElement("div");
       div.className = "msg " + (self ? "self" : "other");
@@ -601,6 +659,14 @@
     }
 
     // --- Event Listeners ---
+    roomSearchInput.addEventListener('input', (e) => {
+      const searchTerm = e.target.value.toLowerCase();
+      const filteredRooms = allUserRooms.filter(room => room.name.toLowerCase().includes(searchTerm));
+      //console.log(`Novas salas: ${newRooms}`);
+      loadRoomsAndRender(filteredRooms);
+
+    });
+
     document.getElementById("sendBtn").addEventListener("click", sendMessage);
     document.getElementById("messageInput").addEventListener("keypress", e => {
       if (e.key === "Enter") sendMessage();
@@ -614,7 +680,6 @@
 
     document.getElementById('addNewRoomBtn').addEventListener('click', openCreateRoomModal);
 
-    // Listeners do Modal
     cancelCreateRoomBtn.addEventListener("click", () => {
       createRoomModal.classList.remove("visible");
     });
@@ -667,7 +732,7 @@
       }
     });
 
-
+    loadRooms();
   </script>
 </body>
 
