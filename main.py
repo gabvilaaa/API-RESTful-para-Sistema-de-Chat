@@ -8,8 +8,7 @@ from sqlalchemy import or_, and_
 from sqlalchemy.orm import Session
 from database import get_db
 from identities import User, UserCreate, Room, RoomCreate, RoomMembers, MessageCreate, Message, UserAuth, GroupMessagePayload
-import auth
-from datetime import timedelta
+
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -52,21 +51,18 @@ def root():
 
 #------------------USERS--------------------------------------
 @app.post("/users")
-def createUser(user: UserCreate, db: Session = Depends(get_db)):
+def createUser(user:UserCreate ,db: Session = Depends(get_db)):
     existing_user = db.query(User).filter(
-        (User.email == user.email) | (User.username == user.username)
-    ).first()
+            (User.email == user.email) | (User.username == user.username)
+        ).first()
     if existing_user:
         raise HTTPException(status_code=400, detail="Email ou username já cadastrado")
     
-    # Gera o hash da senha antes de salvar
-    hashed_password = auth.get_password_hash(user.password)
-
     db_user = User(
         name=user.name,
         username=user.username,
         email=user.email,
-        password=hashed_password, # <-- Salva o HASH, não a senha original
+        password=user.password, # salva senha em hash
         role='user'
     )
 
@@ -77,35 +73,29 @@ def createUser(user: UserCreate, db: Session = Depends(get_db)):
 @app.post("/users/login")
 def user_auth(user: UserAuth, db: Session = Depends(get_db)):
     """
-    Autentica um usuário e, se bem-sucedido, retorna um token JWT.
+    Autentica um usuário pelo email ou username e senha.
+    
+    Parâmetros:
+        user (UserAuth): dados de autenticação (email/username e senha).
+        db (Session): sessão do banco de dados.
+    
+    Retorna:
+        dict: mensagem de sucesso e dados do usuário autenticado.
     """
-    # 1. Busca o usuário no banco de dados pelo email ou username
-    db_user = db.query(User).filter(
+    check_user = db.query(User).filter(
         or_(
             User.username == user.emailUsername,
             User.email == user.emailUsername
-        )
+        ),
+        User.password == user.password
     ).first()
-
-    # 2. Verifica se o usuário existe e se a senha está correta
-    #    A função verify_password compara a senha enviada com o HASH no banco
-    if not db_user or not auth.verify_password(user.password, db_user.password):
-        raise HTTPException(
-            status_code=401,
-            detail="Usuário ou senha inválidos",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
-    # 3. Se a senha for válida, cria o token de acesso
-    #    O "sub" (subject) é o identificador do usuário dentro do token
-    access_token_expires = timedelta(minutes=auth.ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = auth.create_access_token(
-        data={"sub": db_user.username, "user_id": db_user.id}, 
-        expires_delta=access_token_expires
-    )
-
-    # 4. Retorna o token para o cliente
-    return {"access_token": access_token, "token_type": "bearer"}
+    if not check_user:
+        raise HTTPException(status_code=401, detail="Usuário ou senha inválidos")
+    return {
+        "message": f"Usuário {check_user.username} autenticado com sucesso", 
+        "userId": check_user.id,
+        "username": check_user.username
+    }
       
 @app.get("/Allusers")
 def get_all_users(db: Session = Depends(get_db)):
@@ -494,4 +484,5 @@ def getMessages(roomId: int, db: Session = Depends(get_db)):
     """
     messages = db.query(Message).filter(Message.room_id == roomId).all()
     return messages
+
 
