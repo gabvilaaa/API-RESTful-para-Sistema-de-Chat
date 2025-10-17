@@ -11,6 +11,7 @@
       --card: #ffffff;
       --primary: #4f46e5;
       --muted: #6b7280;
+      --danger: #ef4444;
       --radius: 10px;
       --shadow: 0 6px 24px rgba(0, 0, 0, 0.05);
       font-family: Inter, system-ui, sans-serif;
@@ -164,6 +165,30 @@
       align-items: center;
       font-weight: 600;
     }
+
+    /* NOVO: Torna o título do chat clicável quando ativo */
+    #chatTitle.active {
+      cursor: pointer;
+      text-decoration: underline;
+      text-decoration-style: dotted;
+    }
+
+    #leaveRoomBtn {
+      background-color: var(--danger);
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    #leaveRoomBtn:hover {
+      background-color: #d93737;
+    }
+
 
     .messages {
       flex: 1;
@@ -321,6 +346,32 @@
       color: var(--muted);
     }
 
+    /* NOVO: Estilos para o conteúdo do modal de informações */
+    #modalRoomDesc {
+      font-size: 15px;
+      color: var(--muted);
+      margin-bottom: 20px;
+      border-left: 3px solid var(--primary);
+      padding-left: 12px;
+    }
+
+    #modalUserList {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #e5e7eb;
+      border-radius: var(--radius);
+      padding: 8px;
+    }
+
+    .user-list-item {
+      padding: 8px 10px;
+      border-radius: 6px;
+    }
+
+    .user-list-item:nth-child(odd) {
+      background-color: #f9fafb;
+    }
+
     .modal-status-msg {
       padding: 8px 10px;
       border-radius: 8px;
@@ -394,6 +445,72 @@
       transform: translateX(22px);
     }
 
+    #private-options .form-group {
+      position: relative;
+    }
+
+    .user-search-results {
+      position: absolute;
+      width: 100%;
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      z-index: 1001;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+
+    .user-search-results .result-item {
+      padding: 10px 12px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .user-search-results .result-item:hover {
+      background-color: #f3f4f6;
+    }
+
+    .invited-users-container {
+      background-color: #f9fafb;
+      border: 1px dashed #d1d5db;
+      border-radius: var(--radius);
+      padding: 10px;
+      min-height: 40px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .invited-user-tag {
+      display: inline-flex;
+      align-items: center;
+      background: #eef2ff;
+      color: var(--primary);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .remove-user-btn {
+      margin-left: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      color: #999;
+    }
+
+    .remove-user-btn:hover {
+      color: #333;
+    }
+
+    .no-invited-users {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+
     ::-webkit-scrollbar {
       width: 6px;
     }
@@ -401,6 +518,26 @@
     ::-webkit-scrollbar-thumb {
       background: #d1d5db;
       border-radius: 4px;
+    }
+
+    .user-list-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .remove-btn {
+      background: none;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    .remove-btn:hover {
+      color: red;
+      transform: scale(1.1);
     }
   </style>
 </head>
@@ -433,6 +570,7 @@
   <div class="chat">
     <div class="chat-header">
       <span id="chatTitle">Selecione uma conversa</span>
+      <button id="leaveRoomBtn" style="display: none;">Sair do Chat</button>
     </div>
     <div class="messages" id="messages"></div>
     <div class="chat-input">
@@ -460,6 +598,22 @@
             <span class="slider"></span>
           </label>
         </div>
+
+        <div id="private-options" style="display: none; margin-top: 16px;">
+          <div class="form-group">
+            <label for="userSearch">Adicionar Usuário</label>
+            <input type="text" id="userSearch" autocomplete="off" placeholder="Digite para buscar usuários..."
+              style="position: relative;">
+            <div id="userSearchResults" class="user-search-results"></div>
+          </div>
+          <div class="form-group">
+            <label>Convidados</label>
+            <div id="invitedUsers" class="invited-users-container">
+              <span class="no-invited-users">Nenhum usuário convidado.</span>
+            </div>
+          </div>
+        </div>
+
         <div id="modalStatus"></div>
         <div class="modal-actions">
           <button type="button" id="cancelCreateRoom">Cancelar</button>
@@ -469,10 +623,28 @@
     </div>
   </div>
 
+  <div id="roomInfoModal" class="modal-overlay">
+    <div class="modal-content">
+      <h2 id="modalRoomTitle">Informações da Sala</h2>
+      <p id="modalRoomDesc">Descrição da sala...</p>
+
+      <h3>Membros</h3>
+      <div id="modalUserList">
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" id="closeRoomInfo">Fechar</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let ws = null;
     let currentRoom = null;
-    let allUserRooms = []; // Guarda todas as salas do usuário
+    let allUserRooms = [];
+    let roomMembers = [];
+    let isPrivate = false;
+
     const username = localStorage.getItem("username");
     const userId = localStorage.getItem("userId");
 
@@ -482,10 +654,44 @@
     const modalStatus = document.getElementById('modalStatus');
     const roomSearchInput = document.getElementById('roomSearch');
 
+    // NOVO: Elementos do modal de informações da sala
+    const roomInfoModal = document.getElementById('roomInfoModal');
+    const modalRoomTitle = document.getElementById('modalRoomTitle');
+    const modalRoomDesc = document.getElementById('modalRoomDesc');
+    const modalUserList = document.getElementById('modalUserList');
+    const closeRoomInfoBtn = document.getElementById('closeRoomInfo');
+    const chatTitle = document.getElementById('chatTitle');
+
+    const isPrivateSwitch = document.getElementById("isPrivateSwitch");
+    const privateOptions = document.getElementById("private-options");
+    const userSearchInput = document.getElementById("userSearch");
+    const userSearchResults = document.getElementById("userSearchResults");
+    const invitedUsersContainer = document.getElementById("invitedUsers");
+    let invitedUsers = [];
+    let usersInvited = [];
+    let allUsers = [];
+    let isAdm = false;
+    let userSelected = false;
+
+
     if (!username || !userId) {
       window.location.href = "/";
     } else {
       document.getElementById("userLabel").textContent = "👤 " + username;
+    }
+
+    function resetChatView() {
+      if (ws) {
+        ws.close();
+        ws = null;
+      }
+      currentRoom = null;
+      chatTitle.textContent = "Selecione uma conversa";
+      chatTitle.classList.remove('active'); // NOVO: Remove a classe clicável
+      document.getElementById('messages').innerHTML = '';
+      document.getElementById("messageInput").disabled = true;
+      document.getElementById("sendBtn").disabled = true;
+      document.getElementById("leaveRoomBtn").style.display = 'none';
     }
 
     function openCreateRoomModal() {
@@ -494,77 +700,79 @@
       createRoomModal.classList.add("visible");
     }
 
-    function renderRooms(roomsToRender, newRooms) {
+    async function renderRooms(roomsToRender, newRooms) {
       const roomList = document.getElementById("roomList");
       const privateList = document.getElementById("privateList");
 
       roomList.innerHTML = "";
       privateList.innerHTML = "";
 
-      // Renderizando roomsToRender
       if (roomsToRender && roomsToRender.length > 0) {
-        roomsToRender.forEach(r => {
+        for (const r of roomsToRender) {
           const div = document.createElement("div");
           div.className = "item";
           div.textContent = r.name;
-          div.onclick = () => connectToRoom(r.id, r.name);
+
+          const resRoomData = await fetch(`/rooms/users/${r.id}`);
+          const roomData = await resRoomData.json();
+          const members = roomData.user_ids;
+
+          div.onclick = () => connectToRoom(r.id, r.name, members, r.is_private);
 
           if (r.is_private) {
             privateList.appendChild(div);
           } else {
             roomList.appendChild(div);
           }
-        });
+        }
       } else if (roomSearchInput.value) {
-        roomList.innerHTML = `<div class="empty-state"><p>Nenhuma sala encontrada.</p></div>`;
-      } else {
+        roomList.innerHTML = `<div class="empty-state"><p>Nenhuma sala sua encontrada.</p></div>`;
+      } else if (newRooms.length === 0) {
         roomList.innerHTML = `
-            <div class="empty-state">
-                <p>Nenhum chat disponível.</p>
-                <button id="createRoomBtn">Criar uma sala</button>
-            </div>
-        `;
+      <div class="empty-state">
+        <p>Nenhum chat disponível.</p>
+        <button id="createRoomBtn">Criar uma sala</button>
+      </div>
+    `;
         document.getElementById("createRoomBtn").addEventListener("click", openCreateRoomModal);
       }
 
-      // Verificando as novas salas
-      console.log('Novas salas:', newRooms);
-      if (Array.isArray(newRooms) && newRooms.length > 0) {
+      const nonPrivateNewRooms = newRooms.filter(r => !r.is_private);
+
+      if (nonPrivateNewRooms.length > 0) {
         const newState = document.createElement("div");
         newState.classList.add("empty-state");
-        newState.innerHTML = `
-            <p>Novas salas disponíveis.</p>
-            <button id="createRoomBtn">Criar uma sala</button>
-        `;
+        newState.innerHTML = `<p>Novas salas disponíveis.</p>`;
         roomList.appendChild(newState);
 
-        newRooms.forEach(r => {
+        for (const r of nonPrivateNewRooms) {
           const div = document.createElement("div");
           div.className = "item";
           div.textContent = r.name;
-          div.onclick = () => connectToRoom(r.id, r.name);
+          div.onclick = () => connectToRoom(r.id, r.name, r.members, false);
+          roomList.appendChild(div);
+        }
+      }
 
-          if (r.is_private) {
-            privateList.appendChild(div);
-          } else {
-            roomList.appendChild(div);
-          }
-        });
+      const privateNewRooms = newRooms.filter(r => r.is_private);
+      for (const r of privateNewRooms) {
+        const div = document.createElement("div");
+        div.className = "item";
+        div.textContent = r.name;
+        div.onclick = () => connectToRoom(r.id, r.name, r.members, true);
+        privateList.appendChild(div);
       }
     }
-
 
     async function get_new_rooms() {
       if (roomSearchInput.value) {
         const resnewRooms = await fetch(`/rooms?name=${roomSearchInput.value}`);
         if (!resnewRooms.ok) throw new Error("Falha ao carregar salas.");
         newRooms = await resnewRooms.json();
-        await console.log(newRooms);
       } else {
         newRooms = []
-
       }
-      return newRooms;
+      return newRooms.filter(nr => !allUserRooms.some(ur => ur.id === nr.id));
     }
 
     async function loadRooms() {
@@ -572,12 +780,8 @@
       try {
         const resRooms = await fetch(`/rooms/${userId}`);
         if (!resRooms.ok) throw new Error("Falha ao carregar salas.");
-
-
         allUserRooms = await resRooms.json();
-
         renderRooms(allUserRooms, []);
-
       } catch (e) {
         console.error(e);
         roomList.innerHTML = `<div class="empty-state"><p>Erro ao carregar salas.</p></div>`;
@@ -585,52 +789,94 @@
     }
 
     async function loadRoomsAndRender(filteredRooms) {
-      const newRooms = await get_new_rooms(); // Aqui você espera a resposta!
-
-      console.log("Novas salas resolvidas:", newRooms); // Agora sim, será um array
-
-      renderRooms(filteredRooms, newRooms); // Aqui você passa os dados prontos
+      const newRooms = await get_new_rooms();
+      renderRooms(filteredRooms, newRooms);
     }
 
-
-    function connectToRoom(roomId, name) {
+    async function connectToRoom(roomId, name, members, privateRoom) {
       if (ws) ws.close();
+
+
+
+      const resIsAdm = await fetch(`/rooms/${roomId}/users/${userId}/is_admin`)
+      resData = await resIsAdm.json();
+
+      isAdm = resData.is_admin;
+      await console.log("is adm:", isAdm);
+      const resRooms = await fetch(`/rooms/${userId}`);
+      newRooms = await resRooms.json();
+      isPrivate = privateRoom;
+      roomMembers = members;
       currentRoom = roomId;
-      document.getElementById("chatTitle").textContent = name;
+
+      let hasRoom = false;
+      newRooms.forEach(r => {
+        if (r.id === currentRoom) hasRoom = true;
+      });
+
+
+
+      if (!hasRoom) {
+        const enterRes = await fetch(`/rooms/${currentRoom}/enter?userId=${userId}&userRole=user`, { method: 'POST' });
+        if (!enterRes.ok) throw new Error("Não foi possível entrar na sala.");
+        loadRooms();
+      }
+
+
+
+      chatTitle.textContent = name;
+      chatTitle.classList.add('active'); // NOVO: Torna o título clicável
       document.getElementById("messageInput").disabled = false;
       document.getElementById("sendBtn").disabled = false;
       document.getElementById('messages').innerHTML = '';
+      document.getElementById('leaveRoomBtn').style.display = 'inline-block';
 
       ws = new WebSocket(`ws://localhost:8000/ws/${roomId}/${username}`);
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
         appendMessage(data.sender, data.content, data.sender === username);
       };
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+
+        // Verifica se é uma notificação de remoção
+        if (data.type === 'removed') {
+          alert(data.message); // Exibe o alerta para o usuário
+          resetChatView();      // Limpa a tela do chat
+          loadRooms();          // Recarrega a lista de salas na sidebar
+        }
+        // Se não for, é uma mensagem de chat normal
+        else {
+          appendMessage(data.sender, data.content, data.sender === username);
+        }
+      };  
       loadMessages();
     }
 
-    function sendMessage() {
+    async function sendMessage() {
       const input = document.getElementById("messageInput");
       const text = input.value.trim();
       if (!text || !ws) return;
 
-      const payload = {
-        senderId: parseInt(userId),
-        content: text
-      };
+      const payload = { senderId: parseInt(userId), content: text };
 
-      fetch(`/rooms/${currentRoom}/messages`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      }).catch(err => console.error("API Error:", err));
-
+      if (!isPrivate) {
+        fetch(`/rooms/${currentRoom}/messages`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).catch(err => console.error("API Error:", err));
+      } else {
+        fetch(`/messages/direct/${roomMembers[0]}?senderId=${userId}&content=${encodeURIComponent(payload.content)}`, {
+          method: 'POST'
+        });
+      }
       ws.send(JSON.stringify({ content: text }));
       input.value = "";
     }
 
     async function loadMessages() {
-
       const resMessage = await fetch(`/rooms/${currentRoom}/messages`);
       if (!resMessage.ok) {
         console.error("Erro ao carregar mensagens.");
@@ -639,55 +885,213 @@
       const messageData = await resMessage.json();
       if (!messageData || messageData.length === 0) return;
 
-
-      messageData.forEach(msg => {
-        //  console.log("Carregando mensagens para a sala");
-        appendMessage(msg.sender_id, msg.content, true);
-      });
+      for (const msg of messageData) {
+        const sender_info = await fetch(`/users/${msg.sender_id}`);
+        if (sender_info.ok) {
+          const senderData = await sender_info.json();
+          appendMessage(senderData.name, msg.content, msg.sender_id == userId);
+        }
+      }
     }
 
-    function appendMessage(sender, text, self = false) {
+    function appendMessage(sender, text, self) {
       const messages = document.getElementById("messages");
       const div = document.createElement("div");
       div.className = "msg " + (self ? "self" : "other");
-
       const senderSpan = self ? '' : `<strong>${sender}:</strong> `;
       div.innerHTML = `${senderSpan}${text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}`;
-
       messages.appendChild(div);
       messages.scrollTop = messages.scrollHeight;
+    }
+
+    // Função para abrir o modal de informações da sala
+    async function openRoomInfoModal() {
+      if (!currentRoom) return;
+
+      // 1. Encontrar os detalhes da sala atual
+      const roomDetails = allUserRooms.find(r => r.id === currentRoom);
+      if (!roomDetails) {
+        console.error("Detalhes da sala não encontrados.");
+        return;
+      }
+
+      // 2. Preencher título e descrição
+      modalRoomTitle.textContent = roomDetails.name;
+      modalRoomDesc.textContent = roomDetails.description;
+      modalUserList.innerHTML = '<p>Carregando membros...</p>';
+
+      // 3. Exibir o modal
+      roomInfoModal.classList.add('visible');
+
+      // 4. Buscar e listar os membros
+      try {
+        const memberPromises = roomMembers.map(memberId =>
+          fetch(`/users/${memberId}`).then(res => res.json())
+        );
+        const membersData = await Promise.all(memberPromises);
+
+        modalUserList.innerHTML = ''; // Limpa o "Carregando..."
+        membersData.forEach(member => {
+          if (member && member.name) {
+            const item = document.createElement('div');
+            item.className = 'user-list-item';
+            item.textContent = `${member.name} (@${member.username})`;
+
+            if (isAdm) {
+              const removeBtn = document.createElement('button');
+
+              removeBtn.innerHTML = '🗑️';
+              removeBtn.className = 'remove-btn';
+              removeBtn.title = 'Remover usuário';
+
+              // Ação ao clicar
+              removeBtn.addEventListener('click', async () => {
+                await fetch(`/rooms/${currentRoom}/leave?userId=${member.id}`, { method: 'POST' });
+                item.remove();
+                // removeUser(member.id);  <-- exemplo de função
+              });
+
+              // Adiciona o botão ao item
+              item.appendChild(removeBtn);
+            }
+            modalUserList.appendChild(item);
+          }
+        });
+      } catch (error) {
+        modalUserList.innerHTML = '<p>Erro ao carregar membros.</p>';
+        console.error(error);
+      }
+    }
+
+    isPrivateSwitch.addEventListener('change', () => {
+      if (isPrivateSwitch.checked) {
+        privateOptions.style.display = 'block';
+      } else {
+        privateOptions.style.display = 'none';
+        userSearchInput.value = '';
+        userSearchResults.innerHTML = '';
+        invitedUsers = [];
+        userSelected = false;
+        usersInvited = [];
+        renderInvitedUsers();
+      }
+    });
+
+    async function loadAllUsers() {
+      if (allUsers.length > 0) return allUsers;
+
+      try {
+        const res = await fetch(`/Allusers`);
+        if (!res.ok) throw new Error('Falha ao buscar todos os usuários');
+        allUsers = await res.json();
+        return allUsers;
+      } catch (err) {
+        console.error('Erro ao carregar usuários:', err);
+        return [];
+      }
+    }
+
+    userSearchInput.addEventListener('input', async (e) => {
+      const query = e.target.value.toLowerCase();
+      userSearchResults.innerHTML = '';
+      if (query.length < 2 || userSelected) return;
+
+      const users = await loadAllUsers();
+      const filteredUsers = users.filter(user => user.name.toLowerCase().includes(query));
+
+      filteredUsers.forEach(user => {
+        if (invitedUsers.some(invited => invited.id === user.id) || user.id == userId) return;
+        const item = document.createElement('div');
+        item.className = 'result-item';
+        item.textContent = `${user.name} (@${user.username})`;
+        item.onclick = () => addUserToInviteList(user);
+        userSearchResults.appendChild(item);
+      });
+    });
+
+    function addUserToInviteList(user) {
+      if (!invitedUsers.some(invited => invited.id === user.id)) {
+        invitedUsers.push(user);
+        renderInvitedUsers();
+      }
+      userSearchInput.value = '';
+      userSearchResults.innerHTML = '';
+      userSearchInput.focus();
+      userSelected = true;
+      usersInvited.push(user);
+    }
+
+    function removeUserFromInviteList(userIdToRemove) {
+      invitedUsers = invitedUsers.filter(user => user.id !== userIdToRemove);
+      usersInvited = usersInvited.filter(user => user.id !== userIdToRemove);
+      userSelected = false;
+      renderInvitedUsers();
+    }
+
+    function renderInvitedUsers() {
+      invitedUsersContainer.innerHTML = '';
+      if (invitedUsers.length === 0) {
+        invitedUsersContainer.innerHTML = '<span class="no-invited-users">Nenhum usuário convidado.</span>';
+      } else {
+        invitedUsers.forEach(user => {
+          const tag = document.createElement('div');
+          tag.className = 'invited-user-tag';
+          tag.innerHTML = `${user.name}<span class="remove-user-btn" onclick="removeUserFromInviteList(${user.id})" title="Remover">&times;</span>`;
+          invitedUsersContainer.appendChild(tag);
+        });
+      }
     }
 
     // --- Event Listeners ---
     roomSearchInput.addEventListener('input', (e) => {
       const searchTerm = e.target.value.toLowerCase();
       const filteredRooms = allUserRooms.filter(room => room.name.toLowerCase().includes(searchTerm));
-      //console.log(`Novas salas: ${newRooms}`);
       loadRoomsAndRender(filteredRooms);
+    });
 
+    document.getElementById('leaveRoomBtn').addEventListener('click', async () => {
+      if (!currentRoom || !confirm('Tem certeza que deseja sair desta sala?')) return;
+
+      try {
+        const res = await fetch(`/rooms/${currentRoom}/leave?userId=${userId}`, { method: 'POST' });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || 'Não foi possível sair da sala.');
+        }
+        alert('Você saiu da sala.');
+        resetChatView();
+        loadRooms();
+      } catch (error) {
+        console.error('Erro ao sair da sala:', error);
+        alert(error.message);
+      }
+    });
+
+    // NOVO: Event listener para abrir o modal de informações
+    chatTitle.addEventListener('click', () => {
+      if (chatTitle.classList.contains('active')) {
+        openRoomInfoModal();
+      }
+    });
+
+    // NOVO: Event listeners para fechar o modal de informações
+    closeRoomInfoBtn.addEventListener('click', () => roomInfoModal.classList.remove('visible'));
+    roomInfoModal.addEventListener('click', (e) => {
+      if (e.target === roomInfoModal) {
+        roomInfoModal.classList.remove('visible');
+      }
     });
 
     document.getElementById("sendBtn").addEventListener("click", sendMessage);
-    document.getElementById("messageInput").addEventListener("keypress", e => {
-      if (e.key === "Enter") sendMessage();
-    });
-
+    document.getElementById("messageInput").addEventListener("keypress", e => { if (e.key === "Enter") sendMessage(); });
     document.getElementById("logoutBtn").addEventListener("click", () => {
       localStorage.removeItem("username");
       localStorage.removeItem("userId");
       window.location.href = "/";
     });
-
     document.getElementById('addNewRoomBtn').addEventListener('click', openCreateRoomModal);
-
-    cancelCreateRoomBtn.addEventListener("click", () => {
-      createRoomModal.classList.remove("visible");
-    });
-    createRoomModal.addEventListener("click", (e) => {
-      if (e.target === createRoomModal) {
-        createRoomModal.classList.remove("visible");
-      }
-    });
+    cancelCreateRoomBtn.addEventListener("click", () => createRoomModal.classList.remove("visible"));
+    createRoomModal.addEventListener("click", (e) => { if (e.target === createRoomModal) createRoomModal.classList.remove("visible"); });
 
     createRoomForm.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -698,6 +1102,9 @@
       if (!roomName || !roomDescription) {
         modalStatus.innerHTML = `<div class="modal-status-msg error">Preencha todos os campos.</div>`;
         return;
+      } else if (isPrivate && usersInvited.length === 0) {
+        modalStatus.innerHTML = `<div class="modal-status-msg error">Adicione pelo menos um usuário.</div>`;
+        return;
       }
       modalStatus.innerHTML = '';
 
@@ -705,12 +1112,7 @@
         const res = await fetch('/rooms', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: roomName,
-            description: roomDescription,
-            members: 1,
-            is_private: isPrivate
-          })
+          body: JSON.stringify({ name: roomName, description: roomDescription, members: 1, is_private: isPrivate })
         });
 
         if (!res.ok) {
@@ -719,8 +1121,12 @@
         }
 
         const newRoom = await res.json();
+        const enterRes = await fetch(`/rooms/${newRoom.id}/enter?userId=${userId}&userRole=adm`, { method: 'POST' });
 
-        const enterRes = await fetch(`/rooms/${newRoom.id}/enter?userId=${userId}`, { method: 'POST' });
+        for (const user of usersInvited) {
+          await fetch(`/rooms/${newRoom.id}/enter?userId=${user.id}&userRole=user`, { method: 'POST' });
+        }
+
         if (!enterRes.ok) throw new Error("Não foi possível entrar na sala recém-criada.");
 
         createRoomModal.classList.remove("visible");

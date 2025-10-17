@@ -19,27 +19,28 @@ connections = {}
 async def websocket_endpoint(websocket: WebSocket, room_id: int, username: str):
     """
     Gerencia a conexão WebSocket para uma sala de chat específica.
-    Aceita conexões, recebe mensagens e as retransmite para todos os clientes conectados na sala.
-    
-    Parâmetros:
-        websocket (WebSocket): conexão WebSocket do cliente.
-        room_id (int): ID da sala de chat.
-        username (str): nome do usuário conectado.
     """
     await websocket.accept()
-    # Adiciona o websocket à lista de conexões da sala
+    
+    # Estrutura de conexões aninhada: {room_id: {username: websocket}}
     if room_id not in connections:
-        connections[room_id] = []
-    connections[room_id].append(websocket)
+        connections[room_id] = {}
+    connections[room_id][username] = websocket
+    
     try:
         while True:
             data = await websocket.receive_json()
-            # Envia a mensagem recebida para todos os clientes conectados na sala
-            for conn in connections[room_id]:
+            # Envia a mensagem para todos os clientes conectados na sala
+            # Iteramos sobre os valores (websockets) do dicionário da sala
+            for conn in connections[room_id].values():
                 await conn.send_json({"sender": username, "content": data["content"]})
     except WebSocketDisconnect:
-        # Remove o websocket da lista ao desconectar
-        connections[room_id].remove(websocket)
+        # Remove o usuário específico da sala ao desconectar
+        if room_id in connections and username in connections[room_id]:
+            del connections[room_id][username]
+            # Se a sala ficar vazia, remove a entrada da sala
+            if not connections[room_id]:
+                del connections[room_id]
 
 @app.get("/")
 def root():
@@ -173,6 +174,9 @@ def createRoom(room: RoomCreate, db: Session = Depends(get_db)):
     db.add(db_room)
     db.commit()
     db.refresh(db_room)  # retorna o objeto atualizado com ID
+    
+
+    
     return db_room
 
 @app.delete("/rooms/{roomId}")
@@ -185,7 +189,7 @@ def func():
     return output
 
 @app.post("/rooms/{roomId}/enter")
-def joinRoom(roomId: int, userId: int, db: Session = Depends(get_db)):
+def joinRoom(roomId: int, userId: int, userRole:str, db: Session = Depends(get_db)):
     """
     Adiciona um usuário a uma sala de chat.
     Verifica se o usuário e a sala existem e se o usuário já não está na sala.
@@ -209,7 +213,8 @@ def joinRoom(roomId: int, userId: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Usuário já está na sala")
     db_members = RoomMembers(
         user_id=userId,
-        room_id=roomId
+        room_id=roomId,
+        role=userRole
     )
     db.add(db_members)
     db.commit()
@@ -217,36 +222,46 @@ def joinRoom(roomId: int, userId: int, db: Session = Depends(get_db)):
     return db_members
     
 
+# main.py
+
 @app.post("/rooms/{roomId}/leave")
-def leaveRoom(roomId: int, userId: int, db: Session = Depends(get_db)):
+async def leaveRoom(roomId: int, userId: int, db: Session = Depends(get_db)): # Adicionado async
     """
-    Remove um usuário de uma sala de chat.
-    Verifica se o usuário e a sala existem e se o usuário faz parte da sala.
-    
-    Parâmetros:
-        roomId (int): ID da sala.
-        userId (int): ID do usuário.
-        db (Session): sessão do banco de dados.
-    
-    Retorna:
-        dict: mensagem de sucesso.
+    Remove um usuário de uma sala de chat e o notifica via WebSocket.
     """
     room = db.query(Room).filter(Room.id == roomId).first()
     user = db.query(User).filter(User.id == userId).first()
-    members = db.query(RoomMembers).filter(RoomMembers.room_id == roomId, RoomMembers.user_id == userId).first()
+    membership = db.query(RoomMembers).filter(RoomMembers.room_id == roomId, RoomMembers.user_id == userId).first()
+
     if not room:
         raise HTTPException(status_code=404, detail="Sala não encontrada")
     if not user:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
-    if not members:
+    if not membership:
         raise HTTPException(status_code=400, detail="Usuário não faz parte desta sala")
-    db.delete(members)
+
+    # --- LÓGICA DE NOTIFICAÇÃO ---
+    # Verifica se o usuário tem uma conexão ativa na sala
+    if roomId in connections and user.username in connections[roomId]:
+        websocket_to_notify = connections[roomId][user.username]
+        # Envia uma mensagem de notificação específica
+        await websocket_to_notify.send_json({
+            "type": "removed", 
+            "message": "Você foi removido desta sala por um administrador."
+        })
+        # Opcional: fecha a conexão do lado do servidor
+        await websocket_to_notify.close()
+        del connections[roomId][user.username]
+    # ----------------------------
+
+    db.delete(membership)
     db.commit()
+    
     return {"message": f"Usuário {userId} saiu da sala {roomId}"}
 
 @app.get("/rooms")
 def get_new_rooms(name:str, db:Session = Depends(get_db) ):
-    rooms = db.query(Room).filter(Room.name.like(f"%{name}%")).all()
+    rooms = db.query(Room).filter(Room.name.ilike(f"%{name}%")).all()
     return rooms
 
 
@@ -282,6 +297,85 @@ def adminRemove(roomId: int, userId: int, db: Session = Depends(get_db)):
 def get_rooms(userId: int, db:Session = Depends(get_db) ):
     rooms = db.query(Room).join(RoomMembers, Room.id == RoomMembers.room_id).filter(RoomMembers.user_id == userId).all()
     return rooms
+
+
+@app.get("/rooms/users/{roomId}")
+def get_room_users(roomId: int, db: Session = Depends(get_db)):
+    """
+    Retorna os ids dos usuários que pertencem a uma sala específica.
+
+    Parâmetros:
+        roomId (int): ID da sala.
+        db (Session): sessão do banco de dados.
+
+    Retorna:
+        list: lista de ids de usuários (inteiros) na sala.
+    """
+    room = db.query(Room).filter(Room.id == roomId).first()
+    if not room:
+        raise HTTPException(status_code=404, detail="Sala não encontrada")
+    members = db.query(RoomMembers).filter(RoomMembers.room_id == roomId).all()
+    # Extrai somente os ids dos usuários
+    user_ids = [m.user_id for m in members]
+    return {"room_id": roomId, "user_ids": user_ids}
+
+
+def is_room_admin(roomId: int, userId: int, db: Session):
+    """
+    Helper que verifica se um usuário é administrador de uma sala.
+
+    Estratégia:
+    - Se a tabela `room_members` tiver uma coluna `is_admin` ou `role`, verifica esse campo na associação.
+    - Caso contrário, faz fallback para o papel global em `users.role == 'admin'`.
+
+    Parâmetros:
+        roomId (int): ID da sala.
+        userId (int): ID do usuário.
+        db (Session): sessão do banco de dados.
+
+    Retorna:
+        bool: True se for admin (por sala ou global), False caso contrário.
+    """
+    # Verifica associação usuário-sala
+    membership = db.query(RoomMembers).filter(
+        RoomMembers.room_id == roomId,
+        RoomMembers.user_id == userId
+    ).first()
+    if not membership:
+        # Não há associação — não é admin (ou não participa)
+        return False
+    
+    # Se a associação tiver um campo role, verifique se é 'admin'
+    if hasattr(membership, 'role'):
+        try:
+            role_val = getattr(membership, 'role')
+            if isinstance(role_val, str) and role_val.lower() == 'adm':
+                return True
+        except Exception:
+            pass
+
+    # Fallback: verifica role global do usuário
+    user = db.query(User).filter(User.id == userId).first()
+    if user and getattr(user, 'role', None) == 'adm':
+        return True
+
+    return False
+
+
+@app.get("/rooms/{roomId}/users/{userId}/is_admin")
+def check_user_admin(roomId: int, userId: int, db: Session = Depends(get_db)):
+    """
+    Endpoint que informa se um usuário é administrador daquela sala.
+
+    Retorna JSON: {"roomId": ..., "userId": ..., "is_admin": true|false}
+    """
+    # Verifica se sala existe
+    room = db.query(Room).filter(Room.id == roomId).first()
+    if not room:
+        raise HTTPException(status_code=404, detail="Sala não encontrada")
+
+    is_admin = is_room_admin(roomId, userId, db)
+    return {"roomId": roomId, "userId": userId, "is_admin": is_admin}
 
 #----------------MESSAGES-----------------------------------
 @app.post("/messages/direct/{receiverId}")

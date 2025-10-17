@@ -9,12 +9,13 @@ class RoomMembers(Base):
     __tablename__ = "room_members"
     room_id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, primary_key=True, index=True)
+    role = Column(String, default="member")
 
 class Room(Base):
     __tablename__ = "rooms"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
-    description = Column(String, unique=True, index=True)
+    description = Column(String, index=True)
     members = Column(Integer, index=True)
     is_private = Column(Boolean, index=True, default=False)
 
