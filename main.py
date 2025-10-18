@@ -3,10 +3,11 @@ from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 import os
 from datetime import datetime
-from fastapi import FastAPI, Depends,WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Depends,WebSocket, WebSocketDisconnect, Response
 from sqlalchemy import or_, and_
 from sqlalchemy.orm import Session
 from database import get_db
+from auth import *
 from identities import User, UserCreate, Room, RoomCreate, RoomMembers, MessageCreate, Message, UserAuth, GroupMessagePayload
 
 
@@ -71,7 +72,7 @@ def createUser(user:UserCreate ,db: Session = Depends(get_db)):
     return {"message": f"Usuário {db_user.username} criado com sucesso!"}
 
 @app.post("/users/login")
-def user_auth(user: UserAuth, db: Session = Depends(get_db)):
+def user_auth(response: Response, user: UserAuth, db: Session = Depends(get_db)):
     """
     Autentica um usuário pelo email ou username e senha.
     
@@ -89,12 +90,26 @@ def user_auth(user: UserAuth, db: Session = Depends(get_db)):
         ),
         User.password == user.password
     ).first()
+
+    token = create_access_token({"sub": check_user.username})
+
+    # Define o cookie HTTP-only
+    response.set_cookie(
+        key="access_token",
+        value=token,
+        httponly=True,     # 🔒 impede acesso via JavaScript
+        secure=False,      # Em produção: True (HTTPS)
+        samesite="Lax",    # ou "None" se frontend for outro domínio
+        max_age=1800       # 30 minutos
+    )
+
     if not check_user:
         raise HTTPException(status_code=401, detail="Usuário ou senha inválidos")
     return {
         "message": f"Usuário {check_user.username} autenticado com sucesso", 
         "userId": check_user.id,
-        "username": check_user.username
+        "username": check_user.username,
+        "token": token
     }
       
 @app.get("/Allusers")
@@ -431,7 +446,7 @@ def direct(senderId: int, receiverId: int, content: str, db: Session = Depends(g
     }
 
 @app.post("/rooms/{roomId}/messages")
-def groupMessage(roomId: int, payload: GroupMessagePayload, db: Session = Depends(get_db)):
+def groupMessage(roomId: int, payload: GroupMessagePayload, user_id: str = Depends(get_current_user), db: Session = Depends(get_db)):
     """
     Envia uma mensagem para todos os membros de uma sala de chat.
     Verifica se o usuário faz parte da sala antes de enviar.

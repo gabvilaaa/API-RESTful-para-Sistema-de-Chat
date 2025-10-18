@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+from fastapi import Request, HTTPException
 
 # 1. Configuração de Segurança
 # Para gerar uma chave secreta forte, você pode executar no seu terminal:
@@ -47,8 +48,29 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
         # Padrão de 30 minutos se não for fornecido
         expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         
-    to_encode.update({"exp": expire})
+    to_encode.update({"exp": expire}) #expire
     
     # Gera o token JWT
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
+
+def get_current_user(request: Request):
+    token = request.cookies.get("access_token")
+
+    if not token:
+        raise HTTPException(status_code=401, detail="Token ausente")
+
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("sub")
+
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Token inválido")
+
+        return user_id  # retorna o ID do usuário logado
+
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expirado")
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Token inválido")
