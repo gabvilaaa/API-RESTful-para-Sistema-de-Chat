@@ -391,7 +391,7 @@ def check_user_admin(roomId: int, userId: int, db: Session = Depends(get_db)):
 
 #----------------MESSAGES-----------------------------------
 @app.post("/messages/direct/{receiverId}")
-def direct(senderId: int, receiverId: int, content: str, db: Session = Depends(get_db)):
+def direct(senderId: int, receiverId: int, content: str, user_id: str = Depends(get_current_user), db: Session = Depends(get_db)):
     """
     Envia uma mensagem direta entre dois usuários, desde que compartilhem uma sala privada.
     
