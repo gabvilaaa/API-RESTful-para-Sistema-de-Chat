@@ -1,132 +1,209 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Login / Cadastro — Chat</title>
   <style>
-    :root{
-      --bg:#f3f6fb;
-      --card:#ffffff;
-      --primary:#4f46e5;
-      --muted:#6b7280;
-      --success:#16a34a;
-      --danger:#ef4444;
-      --shadow: 0 8px 30px rgba(15,23,42,0.07);
-      --radius:12px;
+    :root {
+      --bg: #f3f6fb;
+      --card: #ffffff;
+      --primary: #4f46e5;
+      --muted: #6b7280;
+      --success: #16a34a;
+      --danger: #ef4444;
+      --shadow: 0 8px 30px rgba(15, 23, 42, 0.07);
+      --radius: 12px;
       font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
     }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      min-height:100vh;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      background: linear-gradient(180deg,#eef2ff 0%, var(--bg) 100%);
-      padding:24px;
+
+    * {
+      box-sizing: border-box
     }
 
-    .container{
-      width:100%;
-      max-width:980px;
-      background:transparent;
-      display:grid;
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(180deg, #eef2ff 0%, var(--bg) 100%);
+      padding: 24px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 980px;
+      background: transparent;
+      display: grid;
       grid-template-columns: 1fr 420px;
-      gap:28px;
-      align-items:center;
+      gap: 28px;
+      align-items: center;
     }
 
     /* painel informativo */
     .panel {
-      background: linear-gradient(180deg, rgba(79,70,229,0.08), rgba(79,70,229,0.03));
-      padding:36px;
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      color:#0f172a;
+      background: linear-gradient(180deg, rgba(79, 70, 229, 0.08), rgba(79, 70, 229, 0.03));
+      padding: 36px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      color: #0f172a;
     }
-    .panel h1{margin:0 0 8px;font-size:28px}
-    .panel p{margin:0;color:var(--muted)}
+
+    .panel h1 {
+      margin: 0 0 8px;
+      font-size: 28px
+    }
+
+    .panel p {
+      margin: 0;
+      color: var(--muted)
+    }
 
     /* card formulário */
-    .card{
-      background:var(--card);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      padding:22px;
-    }
-    .tabs{
-      display:flex;
-      gap:10px;
-      margin-bottom:18px;
-    }
-    .tab{
-      flex:1;
-      text-align:center;
-      padding:10px 12px;
-      border-radius:8px;
-      cursor:pointer;
-      font-weight:600;
-      color:var(--muted);
-      user-select:none;
-      border:1px solid transparent;
-    }
-    .tab.active{
-      background:linear-gradient(90deg,var(--primary),#7c3aed);
-      color:white;
-      border-color:rgba(79,70,229,0.18);
-      box-shadow: 0 6px 18px rgba(79,70,229,0.12);
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px;
     }
 
-    form{display:flex;flex-direction:column;gap:12px}
-    label{font-size:13px;color:var(--muted)}
-    input[type="text"], input[type="email"], input[type="password"]{
-      padding:10px 12px;
-      border-radius:8px;
-      border:1px solid #e6e9ef;
-      outline:none;
-      font-size:14px;
-      background:transparent;
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 18px;
     }
-    input:focus{border-color:rgba(79,70,229,0.5); box-shadow:0 4px 14px rgba(79,70,229,0.06)}
-    .row{display:flex;gap:10px}
-    .small{flex:1}
-    .actions{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
-    button{
-      background:var(--primary);
-      color:white;
-      border:none;
-      padding:10px 14px;
-      border-radius:10px;
-      cursor:pointer;
-      font-weight:600;
-    }
-    button.ghost{
-      background:transparent;
-      color:var(--muted);
-      border:1px solid #eef2ff;
-    }
-    .hint{font-size:13px;color:var(--muted)}
-    .msg{
-      padding:10px 12px;border-radius:8px;font-weight:600;font-size:14px;
-    }
-    .msg.success{background:rgba(16,185,129,0.08); color:var(--success); border:1px solid rgba(16,185,129,0.12)}
-    .msg.error{background:rgba(239,68,68,0.08); color:var(--danger); border:1px solid rgba(239,68,68,0.12)}
 
-    .toggle-pass{cursor:pointer;font-size:13px;color:var(--muted); user-select:none}
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--muted);
+      user-select: none;
+      border: 1px solid transparent;
+    }
+
+    .tab.active {
+      background: linear-gradient(90deg, var(--primary), #7c3aed);
+      color: white;
+      border-color: rgba(79, 70, 229, 0.18);
+      box-shadow: 0 6px 18px rgba(79, 70, 229, 0.12);
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px
+    }
+
+    label {
+      font-size: 13px;
+      color: var(--muted)
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="password"] {
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #e6e9ef;
+      outline: none;
+      font-size: 14px;
+      background: transparent;
+    }
+
+    input:focus {
+      border-color: rgba(79, 70, 229, 0.5);
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.06)
+    }
+
+    .row {
+      display: flex;
+      gap: 10px
+    }
+
+    .small {
+      flex: 1
+    }
+
+    .actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 6px
+    }
+
+    button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    button.ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid #eef2ff;
+    }
+
+    .hint {
+      font-size: 13px;
+      color: var(--muted)
+    }
+
+    .msg {
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .msg.success {
+      background: rgba(16, 185, 129, 0.08);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.12)
+    }
+
+    .msg.error {
+      background: rgba(239, 68, 68, 0.08);
+      color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, 0.12)
+    }
+
+    .toggle-pass {
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--muted);
+      user-select: none
+    }
 
     /* responsivo */
-    @media(max-width:900px){
-      .container{grid-template-columns:1fr; max-width:680px}
-      .panel{order:2}
+    @media(max-width:900px) {
+      .container {
+        grid-template-columns: 1fr;
+        max-width: 680px
+      }
+
+      .panel {
+        order: 2
+      }
     }
   </style>
 </head>
+
 <body>
   <div class="container" role="main">
     <div class="panel" aria-hidden="false">
       <h1>Bem-vindo ao Chat</h1>
-      <p>Entre para conversar em tempo real com outras pessoas. Se ainda não tem conta, crie uma rapidamente — é grátis e leva 10 segundos.</p>
+      <p>Entre para conversar em tempo real com outras pessoas. Se ainda não tem conta, crie uma rapidamente — é grátis
+        e leva 10 segundos.</p>
       <hr style="margin:18px 0;border:none;border-top:1px solid rgba(15,23,42,0.06)">
       <p class="hint"><strong>Dicas:</strong></p>
       <ul style="margin:8px 0 0; padding-left:18px; color:var(--muted)">
@@ -212,37 +289,37 @@
       statusBox.innerHTML = '';
       statusBox.appendChild(div);
       // remove after 6s
-      setTimeout(()=> { if (statusBox.contains(div)) statusBox.removeChild(div); }, 6000);
+      setTimeout(() => { if (statusBox.contains(div)) statusBox.removeChild(div); }, 6000);
     }
 
     function activateTab(which) {
       if (which === 'login') {
-        tabLogin.classList.add('active'); tabLogin.setAttribute('aria-selected','true');
-        tabRegister.classList.remove('active'); tabRegister.setAttribute('aria-selected','false');
+        tabLogin.classList.add('active'); tabLogin.setAttribute('aria-selected', 'true');
+        tabRegister.classList.remove('active'); tabRegister.setAttribute('aria-selected', 'false');
         formLogin.style.display = '';
         formRegister.style.display = 'none';
       } else {
-        tabRegister.classList.add('active'); tabRegister.setAttribute('aria-selected','true');
-        tabLogin.classList.remove('active'); tabLogin.setAttribute('aria-selected','false');
+        tabRegister.classList.add('active'); tabRegister.setAttribute('aria-selected', 'true');
+        tabLogin.classList.remove('active'); tabLogin.setAttribute('aria-selected', 'false');
         formRegister.style.display = '';
         formLogin.style.display = 'none';
       }
     }
 
-    tabLogin.addEventListener('click', ()=> activateTab('login'));
-    tabRegister.addEventListener('click', ()=> activateTab('register'));
+    tabLogin.addEventListener('click', () => activateTab('login'));
+    tabRegister.addEventListener('click', () => activateTab('register'));
 
     // links dentro do card
-    document.getElementById('link-to-register').addEventListener('click', (e)=>{
+    document.getElementById('link-to-register').addEventListener('click', (e) => {
       e.preventDefault(); activateTab('register');
     });
-    document.getElementById('link-to-login').addEventListener('click', (e)=>{
+    document.getElementById('link-to-login').addEventListener('click', (e) => {
       e.preventDefault(); activateTab('login');
     });
 
     // toggle visibilidade senha
-    document.querySelectorAll('.toggle-pass').forEach(el=>{
-      el.addEventListener('click', ()=>{
+    document.querySelectorAll('.toggle-pass').forEach(el => {
+      el.addEventListener('click', () => {
         const target = document.getElementById(el.dataset.target);
         if (!target) return;
         if (target.type === 'password') { target.type = 'text'; el.textContent = 'ocultar'; }
@@ -252,24 +329,28 @@
 
     // --------- Handlers de submit (exemplo com fetch) ---------
     // OBS: ajuste as URLs '/login' e '/register' conforme seu backend FastAPI.
-    formLogin.addEventListener('submit', async (e)=>{
+    formLogin.addEventListener('submit', async (e) => {
       e.preventDefault();
       // pegar valores
+
       const emailUsername = document.getElementById('login-email').value.trim();
       const password = document.getElementById('login-pass').value;
 
-      if (!emailUsername || !password) { showStatus('err','Preencha todos os campos.'); return; }
+      if (!emailUsername || !password) { showStatus('err', 'Preencha todos os campos.'); return; }
 
       try {
-        showStatus('',''); // limpa
+        showStatus('', ''); // limpa
         // exemplo de POST JSON para sua API
+
+        console.log("Senha que está sendo enviada:", password);
+
         const res = await fetch('/users/login', {
           method: 'POST',
-          headers: {'Content-Type':'application/json'},
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ emailUsername, password })
         });
         if (!res.ok) {
-          const err = await res.json().catch(()=>({detail:res.statusText}));
+          const err = await res.json().catch(() => ({ detail: res.statusText }));
           showStatus('err', err.detail || 'Erro ao fazer login.');
           return;
         }
@@ -290,7 +371,7 @@
       }
     });
 
-    formRegister.addEventListener('submit', async (e)=>{
+    formRegister.addEventListener('submit', async (e) => {
       e.preventDefault();
       const name = document.getElementById('reg-name').value.trim();
       const username = document.getElementById('reg-username').value.trim();
@@ -298,18 +379,20 @@
       const password = document.getElementById('reg-pass').value;
       const role = 'user'
 
-      if (!name || !username || !email || !password) { showStatus('err','Preencha todos os campos.'); return; }
-      if (password.length < 6) { showStatus('err','Senha deve ter pelo menos 6 caracteres.'); return; }
+
+      if (!name || !username || !email || !password) { showStatus('err', 'Preencha todos os campos.'); return; }
+      if (password.length < 6) { showStatus('err', 'Senha deve ter pelo menos 6 caracteres.'); return; }
 
       try {
-        showStatus('','');
+        showStatus('', '');
+        
         const res = await fetch('/users', {
           method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ name, username, email, password, role})
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, username, email, password, role })
         });
         if (!res.ok) {
-          const err = await res.json().catch(()=>({detail:res.statusText}));
+          const err = await res.json().catch(() => ({ detail: res.statusText }));
           showStatus('err', err.detail || 'Erro ao cadastrar.');
           return;
         }
@@ -324,9 +407,10 @@
     });
 
     // prevenir autocomplete indesejado e limpar mensagens ao digitar
-    document.querySelectorAll('input').forEach(i=>{
-      i.addEventListener('input', ()=> showStatus('',''));
+    document.querySelectorAll('input').forEach(i => {
+      i.addEventListener('input', () => showStatus('', ''));
     });
   </script>
 </body>
+
 </html>

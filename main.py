@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from auth import *
 from identities import User, UserCreate, Room, RoomCreate, RoomMembers, MessageCreate, Message, UserAuth, GroupMessagePayload
+import auth
 
 
 app = FastAPI()
@@ -53,17 +54,21 @@ def root():
 #------------------USERS--------------------------------------
 @app.post("/users")
 def createUser(user:UserCreate ,db: Session = Depends(get_db)):
+
     existing_user = db.query(User).filter(
             (User.email == user.email) | (User.username == user.username)
         ).first()
     if existing_user:
         raise HTTPException(status_code=400, detail="Email ou username já cadastrado")
     
+    hashed_password = auth.get_password_hash(user.password)
+    # if len(user.password) > 72:
+    
     db_user = User(
         name=user.name,
         username=user.username,
         email=user.email,
-        password=user.password, # salva senha em hash
+        password=hashed_password, # Salva o HASH, não a senha original
         role='user'
     )
 
@@ -73,45 +78,37 @@ def createUser(user:UserCreate ,db: Session = Depends(get_db)):
 
 @app.post("/users/login")
 def user_auth(response: Response, user: UserAuth, db: Session = Depends(get_db)):
-    """
-    Autentica um usuário pelo email ou username e senha.
-    
-    Parâmetros:
-        user (UserAuth): dados de autenticação (email/username e senha).
-        db (Session): sessão do banco de dados.
-    
-    Retorna:
-        dict: mensagem de sucesso e dados do usuário autenticado.
-    """
+    # 1. Busca o usuário APENAS pelo email ou username
     check_user = db.query(User).filter(
         or_(
             User.username == user.emailUsername,
             User.email == user.emailUsername
-        ),
-        User.password == user.password
+        )
     ).first()
 
-    token = create_access_token({"sub": check_user.username})
+    # 2. Verifica se o usuário foi encontrado E se a senha está correta usando a função de verificação
+    if not check_user or not auth.verify_password(user.password, check_user.password):
+        raise HTTPException(status_code=401, detail="Usuário ou senha inválidos")
 
-    # Define o cookie HTTP-only
+    # Se a verificação passou, o resto do seu código está correto
+    token = create_access_token({"sub": check_user.username, "user_id": check_user.id})
+
     response.set_cookie(
         key="access_token",
         value=token,
-        httponly=True,     # 🔒 impede acesso via JavaScript
-        secure=False,      # Em produção: True (HTTPS)
-        samesite="Lax",    # ou "None" se frontend for outro domínio
-        max_age=1800       # 30 minutos
+        httponly=True,
+        secure=False,
+        samesite="Lax",
+        max_age=1800
     )
 
-    if not check_user:
-        raise HTTPException(status_code=401, detail="Usuário ou senha inválidos")
     return {
-        "message": f"Usuário {check_user.username} autenticado com sucesso", 
+        "message": f"Usuário {check_user.username} autenticado com sucesso",
         "userId": check_user.id,
         "username": check_user.username,
         "token": token
     }
-      
+
 @app.get("/Allusers")
 def get_all_users(db: Session = Depends(get_db)):
     """

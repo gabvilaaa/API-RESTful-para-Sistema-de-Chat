@@ -9,12 +9,12 @@ from fastapi import Request, HTTPException
 # 1. Configuração de Segurança
 # Para gerar uma chave secreta forte, você pode executar no seu terminal:
 # openssl rand -hex 32
-SECRET_KEY = "sua_chave_secreta_super_forte_de_32_bytes_aqui"  # SUBSTITUA PELA SUA CHAVE
+SECRET_KEY = "redes1"  # SUBSTITUA PELA SUA CHAVE
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 # Contexto do Passlib para hashing de senhas
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
 
 # 2. Funções para Senha
@@ -24,7 +24,8 @@ def verify_password(plain_password: str, hashed_password ) -> bool:
 
 def get_password_hash(password: str) -> str:
     """Gera o hash de uma senha."""
-    return pwd_context.hash(password)
+    return pwd_context.hash(secret=password)
+    # return (password)
 
 
 # 3. Função para Criar o Token JWT
